@@ -1,12 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cinetrack/core/theme/app_colors.dart';
 import 'package:cinetrack/core/services/storage_service.dart';
+import 'package:cinetrack/core/theme/app_colors.dart';
+import 'package:cinetrack/data/models/actor_models.dart';
+import 'package:cinetrack/data/models/movie_models.dart';
+import 'package:cinetrack/data/services/actor_service.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
 import 'package:cinetrack/data/services/movie_service.dart';
-import 'package:cinetrack/data/services/actor_service.dart';
-import 'package:cinetrack/features/profile/viewmodel/profile_viewmodel.dart';
+import 'package:cinetrack/features/actor/view/actor_detail_view.dart';
 import 'package:cinetrack/features/auth/view/login_view.dart';
+import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
+import 'package:cinetrack/features/profile/viewmodel/profile_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -39,24 +43,163 @@ class _ProfileViewState extends State<ProfileView> {
     super.dispose();
   }
 
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Yakında'),
-        duration: Duration(seconds: 1),
+  Future<void> _handleLogout() async {
+    await _viewModel.logout();
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginView()),
+      (route) => false,
+    );
+  }
+
+  void _openFavoriteMovies() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _FavoriteMoviesPage(
+          movies: _viewModel.favoriteMovies,
+          totalCount: _viewModel.favoritesCount,
+        ),
       ),
     );
   }
 
-  Future<void> _handleLogout() async {
-    await _viewModel.logout();
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginView()),
-        (route) => false,
-      );
-    }
+  void _openFollowedActors() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _FollowedActorsPage(
+          actors: _viewModel.followedActors,
+          totalCount: _viewModel.followedActorsCount,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAccountSheet() async {
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textMuted,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Hesap Bilgileri',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textLight,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _infoRow('Kullanıcı Adı', _viewModel.userName),
+                _infoRow(
+                  'E-posta',
+                  _viewModel.userEmail.isNotEmpty
+                      ? _viewModel.userEmail
+                      : 'Belirtilmemiş',
+                ),
+                _infoRow('Favori Film', '${_viewModel.favoritesCount}'),
+                _infoRow(
+                  'Takip Edilen Kişi',
+                  '${_viewModel.followedActorsCount}',
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _viewModel.loadProfile();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Profili Yenile'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _handleLogout();
+                        },
+                        icon: const Icon(Icons.logout),
+                        label: const Text('Çıkış Yap'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textLight,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -71,21 +214,28 @@ class _ProfileViewState extends State<ProfileView> {
             Expanded(
               child: _viewModel.isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        bottom: 32,
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildProfileSection(),
-                          const SizedBox(height: 24),
-                          _buildMenuSection(),
-                        ],
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _viewModel.loadProfile,
+                      color: AppColors.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          bottom: 32,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildProfileSection(),
+                            const SizedBox(height: 24),
+                            _buildMenuSection(),
+                          ],
+                        ),
                       ),
                     ),
             ),
@@ -101,8 +251,11 @@ class _ProfileViewState extends State<ProfileView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _headerButton(Icons.arrow_back, () => Navigator.maybePop(context),
-              tooltip: 'Geri'),
+          _headerButton(
+            Icons.refresh,
+            () => _viewModel.loadProfile(),
+            tooltip: 'Profili yenile',
+          ),
           const Text(
             'Profil',
             style: TextStyle(
@@ -112,8 +265,11 @@ class _ProfileViewState extends State<ProfileView> {
               letterSpacing: -0.3,
             ),
           ),
-          _headerButton(Icons.settings_outlined, _showComingSoon,
-              tooltip: 'Ayarlar'),
+          _headerButton(
+            Icons.settings_outlined,
+            () => _showAccountSheet(),
+            tooltip: 'Hesap bilgileri',
+          ),
         ],
       ),
     );
@@ -144,44 +300,48 @@ class _ProfileViewState extends State<ProfileView> {
       children: [
         const SizedBox(height: 16),
         Center(
-          child: Stack(
-            children: [
-              Container(
-                width: 128,
-                height: 128,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                    width: 4,
-                  ),
-                  color: AppColors.surfaceDark,
-                ),
-                child: const ClipOval(
-                  child: Icon(Icons.person, color: Colors.grey, size: 48),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
+          child: InkWell(
+            onTap: () => _showAccountSheet(),
+            borderRadius: BorderRadius.circular(999),
+            child: Stack(
+              children: [
+                Container(
+                  width: 128,
+                  height: 128,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.backgroundDark,
-                      width: 2,
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      width: 4,
                     ),
+                    color: AppColors.surfaceDark,
                   ),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 14,
+                  child: const ClipOval(
+                    child: Icon(Icons.person, color: Colors.grey, size: 48),
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.backgroundDark,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -206,37 +366,56 @@ class _ProfileViewState extends State<ProfileView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStat('${_viewModel.favoritesCount}', 'Favoriler'),
-            const SizedBox(width: 48),
-            _buildStat('${_viewModel.followedActorsCount}', 'Takip'),
+            _buildStat(
+              '${_viewModel.favoritesCount}',
+              'Favoriler',
+              onTap: _openFavoriteMovies,
+            ),
+            const SizedBox(width: 32),
+            _buildStat(
+              '${_viewModel.followedActorsCount}',
+              'Takip',
+              onTap: _openFollowedActors,
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildStat(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+  Widget _buildStat(String value, String label, {required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 2),
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.5,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -259,26 +438,26 @@ class _ProfileViewState extends State<ProfileView> {
         _buildMenuItem(
           icon: Icons.favorite,
           label: 'Favori Filmler',
-          onTap: _showComingSoon,
+          subtitle: '${_viewModel.favoritesCount} kayıt',
+          onTap: _openFavoriteMovies,
         ),
         const SizedBox(height: 8),
         _buildMenuItem(
-          icon: Icons.person_pin,
-          label: 'Takip Edilen Oyuncular',
-          onTap: _showComingSoon,
+          icon: Icons.people_alt_outlined,
+          label: 'Takip Edilen Kişiler',
+          subtitle: '${_viewModel.followedActorsCount} kayıt',
+          onTap: _openFollowedActors,
         ),
         const SizedBox(height: 8),
         _buildMenuItem(
-          icon: Icons.history,
-          label: 'İzleme Geçmişi',
-          onTap: _showComingSoon,
+          icon: Icons.badge_outlined,
+          label: 'Hesap Bilgileri',
+          subtitle: 'Kullanıcı bilgileri ve hızlı işlemler',
+          onTap: () => _showAccountSheet(),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-          child: Divider(
-            color: AppColors.borderDark,
-            height: 1,
-          ),
+          child: Divider(color: AppColors.borderDark, height: 1),
         ),
         _buildLogoutItem(),
       ],
@@ -288,6 +467,7 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildMenuItem({
     required IconData icon,
     required String label,
+    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -312,13 +492,26 @@ class _ProfileViewState extends State<ProfileView> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textLight,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Icon(
@@ -367,6 +560,205 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FavoriteMoviesPage extends StatelessWidget {
+  final List<FavoriteMovie> movies;
+  final int totalCount;
+
+  const _FavoriteMoviesPage({required this.movies, required this.totalCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundDark,
+        foregroundColor: Colors.white,
+        title: Text('Favori Filmler ($totalCount)'),
+      ),
+      body: movies.isEmpty
+          ? const _ProfileEmptyState(
+              icon: Icons.favorite_border,
+              message: 'Henüz favori filminiz yok.',
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: movies.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final movie = movies[index];
+                return _ProfileListCard(
+                  title: movie.title,
+                  subtitle: 'TMDB ID: ${movie.tmdbId}',
+                  trailingText: 'Detay',
+                  icon: Icons.movie_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MovieDetailView(tmdbId: movie.tmdbId),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _FollowedActorsPage extends StatelessWidget {
+  final List<FollowedActor> actors;
+  final int totalCount;
+
+  const _FollowedActorsPage({required this.actors, required this.totalCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: AppColors.backgroundDark,
+        foregroundColor: Colors.white,
+        title: Text('Takip Edilen Kişiler ($totalCount)'),
+      ),
+      body: actors.isEmpty
+          ? const _ProfileEmptyState(
+              icon: Icons.people_outline,
+              message: 'Henüz takip ettiğiniz kişi yok.',
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: actors.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final actor = actors[index];
+                return _ProfileListCard(
+                  title: actor.name,
+                  subtitle: 'TMDB ID: ${actor.tmdbId}',
+                  trailingText: 'Detay',
+                  icon: Icons.person_outline,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ActorDetailView(personId: actor.tmdbId),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+    );
+  }
+}
+
+class _ProfileListCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String trailingText;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ProfileListCard({
+    required this.title,
+    required this.subtitle,
+    required this.trailingText,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceDark,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                trailingText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileEmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _ProfileEmptyState({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: AppColors.textMuted),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: AppColors.textMuted),
+            ),
+          ],
         ),
       ),
     );
