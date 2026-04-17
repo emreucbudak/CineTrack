@@ -47,6 +47,28 @@ class MovieService {
     return [];
   }
 
+  Future<List<TrendingMovie>> searchMovies({
+    required String query,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.movieSearch,
+        queryParameters: {'query': query, 'page': page},
+      );
+
+      if (response.data['success'] == true) {
+        final list = response.data['data'] as List;
+        return list
+            .map((e) => TrendingMovie.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } on DioException catch (_) {
+      // Fall through
+    }
+    return [];
+  }
+
   Future<MovieDetail?> getMovieDetail(int tmdbId) async {
     try {
       final response = await _client.dio.get(
@@ -98,11 +120,7 @@ class MovieService {
     try {
       final response = await _client.dio.post(
         ApiConstants.favorites,
-        data: {
-          'tmdbId': tmdbId,
-          'title': title,
-          'posterPath': posterPath,
-        },
+        data: {'tmdbId': tmdbId, 'title': title, 'posterPath': posterPath},
       );
 
       if (response.statusCode == 201 && response.data['success'] == true) {
@@ -110,12 +128,15 @@ class MovieService {
       }
       return (
         success: false,
-        error: (response.data['errorMessage'] as String?) ?? 'Favori eklenemedi.',
+        error:
+            (response.data['errorMessage'] as String?) ?? 'Favori eklenemedi.',
       );
     } on DioException catch (e) {
       return (
         success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+        error:
+            (e.response?.data?['errorMessage'] as String?) ??
+            'Bağlantı hatası.',
       );
     }
   }
@@ -133,7 +154,9 @@ class MovieService {
     } on DioException catch (e) {
       return (
         success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+        error:
+            (e.response?.data?['errorMessage'] as String?) ??
+            'Bağlantı hatası.',
       );
     }
   }

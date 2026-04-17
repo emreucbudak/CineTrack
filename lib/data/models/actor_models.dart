@@ -32,7 +32,8 @@ class PersonDetail {
       birthday: json['birthday'],
       placeOfBirth: json['placeOfBirth'],
       knownForDepartment: json['knownForDepartment'],
-      movieCredits: (json['movieCredits'] as List?)
+      movieCredits:
+          (json['movieCredits'] as List?)
               ?.map((e) => MovieCredit.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -99,6 +100,31 @@ class FollowedActor {
       name: json['name'] ?? '',
       profilePath: json['profilePath'],
       followedAt: json['followedAt'] ?? '',
+    );
+  }
+}
+
+class SearchPerson {
+  final int id;
+  final String name;
+  final String? profilePath;
+  final String? knownForDepartment;
+
+  SearchPerson({
+    required this.id,
+    required this.name,
+    this.profilePath,
+    this.knownForDepartment,
+  });
+
+  String get profileUrl => ApiConstants.profileUrl(profilePath);
+
+  factory SearchPerson.fromJson(Map<String, dynamic> json) {
+    return SearchPerson(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      profilePath: json['profilePath'],
+      knownForDepartment: json['knownForDepartment'],
     );
   }
 }

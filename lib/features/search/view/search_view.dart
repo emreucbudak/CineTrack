@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
+import 'package:cinetrack/data/models/actor_models.dart';
 import 'package:cinetrack/data/models/movie_models.dart';
+import 'package:cinetrack/data/services/actor_service.dart';
 import 'package:cinetrack/data/services/movie_service.dart';
-import 'package:cinetrack/features/search/viewmodel/search_viewmodel.dart';
+import 'package:cinetrack/features/actor/view/actor_detail_view.dart';
 import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
+import 'package:cinetrack/features/search/viewmodel/search_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -20,7 +23,10 @@ class _SearchViewState extends State<SearchView> {
   @override
   void initState() {
     super.initState();
-    _viewModel = SearchViewModel(context.read<MovieService>());
+    _viewModel = SearchViewModel(
+      context.read<MovieService>(),
+      context.read<ActorService>(),
+    );
     _viewModel.addListener(_onChanged);
   }
 
@@ -37,6 +43,13 @@ class _SearchViewState extends State<SearchView> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => MovieDetailView(tmdbId: tmdbId)),
+    );
+  }
+
+  void _openActorDetail(int personId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ActorDetailView(personId: personId)),
     );
   }
 
@@ -65,11 +78,7 @@ class _SearchViewState extends State<SearchView> {
         bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTopBar(),
-            _buildSearchBar(),
-            _buildTabs(),
-          ],
+          children: [_buildTopBar(), _buildSearchBar(), _buildTabs()],
         ),
       ),
     );
@@ -105,7 +114,10 @@ class _SearchViewState extends State<SearchView> {
             child: IconButton(
               onPressed: () {},
               tooltip: 'Hesap',
-              icon: const Icon(Icons.account_circle_outlined, color: Colors.white),
+              icon: const Icon(
+                Icons.account_circle_outlined,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -140,8 +152,14 @@ class _SearchViewState extends State<SearchView> {
             padding: EdgeInsets.only(left: 16, right: 12),
             child: Icon(Icons.search, color: AppColors.textMuted, size: 20),
           ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
         ),
         onChanged: (_) => _viewModel.onSearchChanged(),
       ),
@@ -153,7 +171,7 @@ class _SearchViewState extends State<SearchView> {
       children: [
         _tabItem('Tümü', SearchTab.all),
         _tabItem('Filmler', SearchTab.movies),
-        _tabItem('Oyuncular', SearchTab.actors),
+        _tabItem('Kişiler', SearchTab.actors),
       ],
     );
   }
@@ -194,60 +212,110 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
-    final movies = _viewModel.filteredMovies;
+    if (_viewModel.errorMessage != null && !_viewModel.hasQuery) {
+      return _buildMessage(_viewModel.errorMessage!);
+    }
+
+    final movies = _viewModel.movieResults;
+    final actors = _viewModel.actorResults;
+
+    if (_viewModel.hasQuery) {
+      return switch (_viewModel.selectedTab) {
+        SearchTab.movies =>
+          movies.isEmpty
+              ? _buildMessage('Film bulunamadı')
+              : _buildScrollableMovieSection('Arama Sonuçları', movies),
+        SearchTab.actors =>
+          actors.isEmpty
+              ? _buildMessage('Kişi bulunamadı')
+              : _buildScrollableActorSection('Kişi Sonuçları', actors),
+        SearchTab.all =>
+          (movies.isEmpty && actors.isEmpty)
+              ? _buildMessage('Sonuç bulunamadı')
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      if (actors.isNotEmpty) ...[
+                        _buildActorSection('Kişiler', actors),
+                        const SizedBox(height: 24),
+                      ],
+                      if (movies.isNotEmpty)
+                        _buildMovieSection('Filmler', movies),
+                    ],
+                  ),
+                ),
+      };
+    }
 
     if (_viewModel.selectedTab == SearchTab.actors) {
-      return const Center(
-        child: Text(
-          'Oyuncu arama yakında',
-          style: TextStyle(color: AppColors.textMuted, fontSize: 16),
-        ),
-      );
+      return _buildMessage('Kişi aramak için yukarıya bir isim yazın');
     }
 
     if (movies.isEmpty) {
-      return Center(
-        child: Text(
-          _viewModel.hasQuery ? 'Film bulunamadı' : 'Gösterilecek film yok',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
-        ),
-      );
+      return _buildMessage('Gösterilecek film yok');
     }
 
+    return _buildScrollableMovieSection('Trend Filmler', movies);
+  }
+
+  Widget _buildScrollableMovieSection(
+    String title,
+    List<TrendingMovie> movies,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildTrendingMovies(movies),
-        ],
-      ),
+      child: _buildMovieSection(title, movies),
     );
   }
 
-  Widget _buildTrendingMovies(List<TrendingMovie> movies) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 32),
-      child: Column(
-        children: [
-          _sectionHeader(_viewModel.hasQuery ? 'Arama Sonuçları' : 'Trend Filmler'),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.55,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: movies.length > 10 ? 10 : movies.length,
-            itemBuilder: (context, index) {
-              final movie = movies[index];
-              return _movieCard(movie);
-            },
+  Widget _buildScrollableActorSection(String title, List<SearchPerson> actors) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: _buildActorSection(title, actors),
+    );
+  }
+
+  Widget _buildMovieSection(String title, List<TrendingMovie> movies) {
+    return Column(
+      children: [
+        _sectionHeader(title),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.55,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
           ),
-        ],
-      ),
+          itemCount: movies.length > 20 ? 20 : movies.length,
+          itemBuilder: (context, index) {
+            final movie = movies[index];
+            return _movieCard(movie);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActorSection(String title, List<SearchPerson> actors) {
+    return Column(
+      children: [
+        _sectionHeader(title),
+        const SizedBox(height: 16),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: actors.length > 20 ? 20 : actors.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final actor = actors[index];
+            return _actorCard(actor);
+          },
+        ),
+      ],
     );
   }
 
@@ -278,7 +346,10 @@ class _SearchViewState extends State<SearchView> {
                     imageUrl: movie.posterUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, _) => const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     ),
                     errorWidget: (_, _, _) => const Center(
                       child: Icon(Icons.movie, color: Colors.grey, size: 40),
@@ -288,7 +359,10 @@ class _SearchViewState extends State<SearchView> {
                     top: 8,
                     right: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(6),
@@ -346,9 +420,88 @@ class _SearchViewState extends State<SearchView> {
     );
   }
 
+  Widget _actorCard(SearchPerson actor) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openActorDetail(actor.id),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceDark,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.borderDarkSolid),
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 64,
+                  height: 64,
+                  child: CachedNetworkImage(
+                    imageUrl: actor.profileUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(
+                      color: AppColors.neutralMuted,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (_, _, _) => Container(
+                      color: AppColors.neutralMuted,
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white70,
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      actor.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      actor.knownForDepartment?.isNotEmpty == true
+                          ? actor.knownForDepartment!
+                          : 'Kişi',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _sectionHeader(String title) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
@@ -359,25 +512,20 @@ class _SearchViewState extends State<SearchView> {
             letterSpacing: -0.3,
           ),
         ),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(8),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text(
-                'Tümünü Gör',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildMessage(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
+        ),
+      ),
     );
   }
 }

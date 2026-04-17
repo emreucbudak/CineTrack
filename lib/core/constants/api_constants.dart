@@ -27,11 +27,13 @@ class ApiConstants {
   // Movie Endpoints
   static const String trending = '/movies/trending';
   static const String discover = '/movies/discover';
+  static const String movieSearch = '/movies/search';
   static const String movieDetail = '/movies'; // /{tmdbId}
   static const String favorites = '/movies/favorites';
 
   // Actor Endpoints
   static const String actorDetail = '/actors'; // /{personId}
+  static const String actorSearch = '/actors/search';
   static const String followedActors = '/actors/followed';
 
   /// Build full poster URL from TMDB relative path

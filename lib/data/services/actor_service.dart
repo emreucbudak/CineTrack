@@ -9,6 +9,28 @@ class ActorService {
 
   ActorService(this._client);
 
+  Future<List<SearchPerson>> searchActors({
+    required String query,
+    int page = 1,
+  }) async {
+    try {
+      final response = await _client.dio.get(
+        ApiConstants.actorSearch,
+        queryParameters: {'query': query, 'page': page},
+      );
+
+      if (response.data['success'] == true) {
+        final list = response.data['data'] as List;
+        return list
+            .map((e) => SearchPerson.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } on DioException catch (_) {
+      // Fall through
+    }
+    return [];
+  }
+
   Future<PersonDetail?> getActorDetail(int personId) async {
     try {
       final response = await _client.dio.get(
@@ -60,11 +82,7 @@ class ActorService {
     try {
       final response = await _client.dio.post(
         ApiConstants.followedActors,
-        data: {
-          'tmdbId': tmdbId,
-          'name': name,
-          'profilePath': profilePath,
-        },
+        data: {'tmdbId': tmdbId, 'name': name, 'profilePath': profilePath},
       );
 
       if (response.statusCode == 201 && response.data['success'] == true) {
@@ -72,12 +90,16 @@ class ActorService {
       }
       return (
         success: false,
-        error: (response.data['errorMessage'] as String?) ?? 'Oyuncu takip edilemedi.',
+        error:
+            (response.data['errorMessage'] as String?) ??
+            'Oyuncu takip edilemedi.',
       );
     } on DioException catch (e) {
       return (
         success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+        error:
+            (e.response?.data?['errorMessage'] as String?) ??
+            'Bağlantı hatası.',
       );
     }
   }
@@ -95,7 +117,9 @@ class ActorService {
     } on DioException catch (e) {
       return (
         success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+        error:
+            (e.response?.data?['errorMessage'] as String?) ??
+            'Bağlantı hatası.',
       );
     }
   }
