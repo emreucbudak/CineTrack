@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
+import 'dart:math';
+
 import 'package:cinetrack/data/models/movie_models.dart';
 import 'package:cinetrack/data/services/movie_service.dart';
+import 'package:flutter/material.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final MovieService _movieService;
+  final Random _random = Random();
 
   HomeViewModel(this._movieService) {
     loadData();
@@ -14,16 +17,23 @@ class HomeViewModel extends ChangeNotifier {
   List<TrendingMovie> _trendingMovies = [];
   List<TrendingMovie> _discoverMovies = [];
   List<TrendingMovie> _weeklyTrending = [];
+  TrendingMovie? _movieOfTheDay;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<TrendingMovie> get trendingMovies => _trendingMovies;
   List<TrendingMovie> get discoverMovies => _discoverMovies;
   List<TrendingMovie> get weeklyTrending => _weeklyTrending;
+  TrendingMovie? get movieOfTheDay => _movieOfTheDay;
 
-  // Hero movie = first trending movie
-  TrendingMovie? get heroMovie =>
-      _trendingMovies.isNotEmpty ? _trendingMovies.first : null;
+  List<TrendingMovie> get _allMovies {
+    final seenIds = <int>{};
+    return [
+      ..._trendingMovies,
+      ..._discoverMovies,
+      ..._weeklyTrending,
+    ].where((movie) => seenIds.add(movie.id)).toList();
+  }
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -40,17 +50,52 @@ class HomeViewModel extends ChangeNotifier {
       _trendingMovies = results[0];
       _discoverMovies = results[1];
       _weeklyTrending = results[2];
+      _selectMovieOfTheDay(notify: false);
 
-      if (_trendingMovies.isEmpty &&
-          _discoverMovies.isEmpty &&
-          _weeklyTrending.isEmpty) {
-        _errorMessage = 'Filmler yüklenemedi. Lütfen internet bağlantınızı kontrol edin.';
+      if (_allMovies.isEmpty) {
+        _errorMessage =
+            'Filmler yüklenemedi. Lütfen internet bağlantınızı kontrol edin.';
       }
-    } catch (e) {
+    } catch (_) {
       _errorMessage = 'Veriler yüklenemedi.';
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  void pickRandomMovie() {
+    _selectMovieOfTheDay();
+  }
+
+  void _selectMovieOfTheDay({bool notify = true}) {
+    final movies = _allMovies;
+
+    if (movies.isEmpty) {
+      _movieOfTheDay = null;
+      if (notify) {
+        notifyListeners();
+      }
+      return;
+    }
+
+    if (movies.length == 1) {
+      _movieOfTheDay = movies.first;
+      if (notify) {
+        notifyListeners();
+      }
+      return;
+    }
+
+    TrendingMovie nextMovie = movies[_random.nextInt(movies.length)];
+    while (nextMovie.id == _movieOfTheDay?.id) {
+      nextMovie = movies[_random.nextInt(movies.length)];
+    }
+
+    _movieOfTheDay = nextMovie;
+
+    if (notify) {
+      notifyListeners();
+    }
   }
 }

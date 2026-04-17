@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
 import 'package:cinetrack/data/models/movie_models.dart';
 import 'package:cinetrack/data/services/movie_service.dart';
 import 'package:cinetrack/features/home/viewmodel/home_viewmodel.dart';
 import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -53,23 +53,23 @@ class _HomeViewState extends State<HomeView> {
                     child: CircularProgressIndicator(color: AppColors.primary),
                   )
                 : _viewModel.errorMessage != null
-                    ? _buildError()
-                    : RefreshIndicator(
-                        onRefresh: _viewModel.loadData,
-                        color: AppColors.primary,
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: Column(
-                            children: [
-                              _buildHeroSection(),
-                              _buildRandomPickSection(),
-                              _buildNowPlayingSection(),
-                              _buildPopularSection(),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
+                ? _buildError()
+                : RefreshIndicator(
+                    onRefresh: _viewModel.loadData,
+                    color: AppColors.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          _buildHeroSection(),
+                          _buildRandomPickSection(),
+                          _buildNowPlayingSection(),
+                          _buildPopularSection(),
+                          const SizedBox(height: 24),
+                        ],
                       ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -91,7 +91,10 @@ class _HomeViewState extends State<HomeView> {
           ElevatedButton(
             onPressed: _viewModel.loadData,
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Tekrar Dene', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Tekrar Dene',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -102,9 +105,7 @@ class _HomeViewState extends State<HomeView> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.backgroundDark.withValues(alpha: 0.8),
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderDark),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.borderDark)),
       ),
       child: SafeArea(
         bottom: false,
@@ -133,7 +134,10 @@ class _HomeViewState extends State<HomeView> {
                   IconButton(
                     onPressed: () {},
                     tooltip: 'Bildirimler',
-                    icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                    icon: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Container(
@@ -146,7 +150,11 @@ class _HomeViewState extends State<HomeView> {
                         color: AppColors.primary.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: const Icon(Icons.person, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -158,147 +166,237 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildHeroSection() {
-    final hero = _viewModel.heroMovie;
+    final hero = _viewModel.movieOfTheDay;
     if (hero == null) return const SizedBox.shrink();
 
-    return GestureDetector(
-      onTap: () => _openMovieDetail(hero.id),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CachedNetworkImage(
-                  imageUrl: hero.posterUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
-                    color: AppColors.surfaceDark,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  ),
-                  errorWidget: (_, _, _) => Container(
-                    color: AppColors.surfaceDark,
-                    child: const Icon(Icons.movie, color: Colors.grey, size: 64),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: hero.posterUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => Container(
+                  color: AppColors.surfaceDark,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        AppColors.backgroundDark.withValues(alpha: 0.4),
-                        AppColors.backgroundDark,
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    ),
-                  ),
+                errorWidget: (_, _, _) => Container(
+                  color: AppColors.surfaceDark,
+                  child: const Icon(Icons.movie, color: Colors.grey, size: 64),
                 ),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          'GÜNÜN FİLMİ',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        hero.title,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -1,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              hero.overview ?? '',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade300,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            onPressed: () => _openMovieDetail(hero.id),
-                            icon: const Icon(Icons.play_circle, size: 18),
-                            label: const Text(
-                              'Fragmanı İzle',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              elevation: 8,
-                              shadowColor: AppColors.primary.withValues(alpha: 0.2),
-                            ),
-                          ),
-                        ],
-                      ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      AppColors.backgroundDark.withValues(alpha: 0.45),
+                      AppColors.backgroundDark,
                     ],
+                    stops: const [0.0, 0.55, 1.0],
                   ),
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'GÜNÜN FİLMİ',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      hero.title,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -1,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      hero.overview?.isNotEmpty == true
+                          ? hero.overview!
+                          : 'Bu film için açıklama henüz eklenmemiş.',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade300,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _openMovieDetail(hero.id),
+                          icon: const Icon(Icons.info_outline, size: 18),
+                          label: const Text(
+                            'Detayı Aç',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            elevation: 8,
+                            shadowColor: AppColors.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _viewModel.pickRandomMovie,
+                          icon: const Icon(Icons.shuffle, size: 18),
+                          label: const Text(
+                            'Rastgele Film Seç',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.28),
+                            ),
+                            backgroundColor: Colors.black.withValues(
+                              alpha: 0.2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.primary.withValues(alpha: 0.9),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Bugün için rastgele seçildi',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.82),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (hero.year.isNotEmpty)
+                          Text(
+                            hero.year,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              hero.ratingStr,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _sectionHeader(String title, {String? actionText, IconData? actionIcon}) {
+  Widget _sectionHeader(
+    String title, {
+    String? actionText,
+    IconData? actionIcon,
+    VoidCallback? onActionTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -330,10 +428,13 @@ class _HomeViewState extends State<HomeView> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {},
+                onTap: onActionTap,
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Text(
@@ -366,7 +467,12 @@ class _HomeViewState extends State<HomeView> {
       padding: const EdgeInsets.only(top: 8, bottom: 16),
       child: Column(
         children: [
-          _sectionHeader('Öne Çıkan Seçim', actionText: 'Karıştır', actionIcon: Icons.shuffle),
+          _sectionHeader(
+            'Öne Çıkan Seçimler',
+            actionText: 'Rastgele Film Seç',
+            actionIcon: Icons.shuffle,
+            onActionTap: _viewModel.pickRandomMovie,
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 280,
@@ -416,19 +522,29 @@ class _HomeViewState extends State<HomeView> {
                       placeholder: (_, _) => Container(
                         color: AppColors.surfaceDark,
                         child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                       errorWidget: (_, _, _) => Container(
                         color: AppColors.surfaceDark,
-                        child: const Icon(Icons.movie, color: Colors.grey, size: 32),
+                        child: const Icon(
+                          Icons.movie,
+                          color: Colors.grey,
+                          size: 32,
+                        ),
                       ),
                     ),
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.6),
                           borderRadius: BorderRadius.circular(6),
@@ -436,7 +552,11 @@ class _HomeViewState extends State<HomeView> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 12),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 12,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               movie.ratingStr,
@@ -468,10 +588,7 @@ class _HomeViewState extends State<HomeView> {
             const SizedBox(height: 2),
             Text(
               movie.year,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
-              ),
+              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -533,7 +650,10 @@ class _HomeViewState extends State<HomeView> {
                 placeholder: (_, _) => Container(
                   color: AppColors.surfaceDark,
                   child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 errorWidget: (_, _, _) => Container(
@@ -627,9 +747,7 @@ class _HomeViewState extends State<HomeView> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.borderDark,
-                  ),
+                  border: Border.all(color: AppColors.borderDark),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.3),
@@ -645,12 +763,19 @@ class _HomeViewState extends State<HomeView> {
                   placeholder: (_, _) => Container(
                     color: AppColors.surfaceDark,
                     child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   errorWidget: (_, _, _) => Container(
                     color: AppColors.surfaceDark,
-                    child: const Icon(Icons.movie, color: Colors.grey, size: 28),
+                    child: const Icon(
+                      Icons.movie,
+                      color: Colors.grey,
+                      size: 28,
+                    ),
                   ),
                 ),
               ),
