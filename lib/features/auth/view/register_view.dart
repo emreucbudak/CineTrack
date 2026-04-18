@@ -163,7 +163,7 @@ class _RegisterViewState extends State<RegisterView> {
         const Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'Hesap Olustur',
+            'Hesap Oluştur',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -173,7 +173,7 @@ class _RegisterViewState extends State<RegisterView> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Sinema tutkunlari icin hazirlanan topluluga katilin.',
+          'Sinema tutkunları için hazırlanan topluluğa katılın.',
           style: TextStyle(fontSize: 16, color: AppColors.textMuted),
         ),
       ],
@@ -184,7 +184,7 @@ class _RegisterViewState extends State<RegisterView> {
     return Column(
       children: [
         _buildTextField(
-          label: 'E-POSTA ADRESI',
+          label: 'E-POSTA ADRESİ',
           hint: 'name@example.com',
           icon: Icons.mail_outline,
           controller: _viewModel.emailController,
@@ -193,14 +193,14 @@ class _RegisterViewState extends State<RegisterView> {
         const SizedBox(height: 24),
         _buildTextField(
           label: 'KULLANICI ADI',
-          hint: 'Bir kullanici adi secin',
+          hint: 'Bir kullanıcı adı seçin',
           icon: Icons.person_outline,
           controller: _viewModel.usernameController,
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'SIFRE',
-          hint: 'Bir sifre olusturun',
+          label: 'ŞİFRE',
+          hint: 'Bir şifre oluşturun',
           icon: Icons.lock_outline,
           controller: _viewModel.passwordController,
           isPassword: true,
@@ -209,8 +209,8 @@ class _RegisterViewState extends State<RegisterView> {
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'SIFRE TEKRARI',
-          hint: 'Sifrenizi tekrar girin',
+          label: 'ŞİFRE TEKRARI',
+          hint: 'Şifrenizi tekrar girin',
           icon: Icons.shield_outlined,
           controller: _viewModel.confirmPasswordController,
           isPassword: true,
@@ -242,7 +242,7 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                   )
                 : const Text(
-                    'Kayit Ol',
+                    'Kayıt Ol',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
           ),
@@ -341,13 +341,13 @@ class _RegisterViewState extends State<RegisterView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Zaten hesabin var mi? ',
+            'Zaten hesabın var mı? ',
             style: TextStyle(color: AppColors.textMuted),
           ),
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: const Text(
-              'Giris Yap',
+              'Giriş Yap',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,

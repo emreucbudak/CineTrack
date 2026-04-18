@@ -159,7 +159,7 @@ class _LoginViewState extends State<LoginView> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Sinematik yolculugunuz burada basliyor',
+          'Sinematik yolculuğunuz burada başlıyor',
           style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
       ],
@@ -203,7 +203,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   )
                 : const Text(
-                    'Giris Yap',
+                    'Giriş Yap',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
@@ -289,7 +289,7 @@ class _LoginViewState extends State<LoginView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Sifre',
+                'Şifre',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -299,7 +299,7 @@ class _LoginViewState extends State<LoginView> {
               GestureDetector(
                 onTap: () {},
                 child: const Text(
-                  'Sifrenizi mi unuttunuz?',
+                  'Şifrenizi mi unuttunuz?',
                   style: TextStyle(fontSize: 12, color: AppColors.primary),
                 ),
               ),
@@ -371,7 +371,7 @@ class _LoginViewState extends State<LoginView> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Hesabiniz yok mu? ',
+          'Hesabınız yok mu? ',
           style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
         GestureDetector(
@@ -382,7 +382,7 @@ class _LoginViewState extends State<LoginView> {
             );
           },
           child: const Text(
-            'Kayit Ol',
+            'Kayıt Ol',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
