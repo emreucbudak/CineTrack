@@ -29,6 +29,10 @@ class ProfileViewModel extends ChangeNotifier {
   List<FavoriteMovie> _favoriteMovies = [];
   List<FollowedActor> _followedActors = [];
 
+  // Frontend placeholder values until subscription endpoints are connected.
+  bool _hasPremiumSubscription = false;
+  DateTime? _subscriptionEndsAt;
+
   bool get isLoading => _isLoading;
   String get userName => _userName;
   String get userEmail => _userEmail;
@@ -37,12 +41,29 @@ class ProfileViewModel extends ChangeNotifier {
   List<FavoriteMovie> get favoriteMovies => _favoriteMovies;
   List<FollowedActor> get followedActors => _followedActors;
 
+  bool get hasPremiumSubscription => _hasPremiumSubscription;
+  String get subscriptionPlanLabel =>
+      _hasPremiumSubscription ? 'Premium' : 'Standart';
+  String get subscriptionEndsAtLabel {
+    if (!_hasPremiumSubscription || _subscriptionEndsAt == null) {
+      return 'Süresiz';
+    }
+
+    final date = _subscriptionEndsAt!;
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day.$month.$year';
+  }
+
   Future<void> loadProfile() async {
     _isLoading = true;
     notifyListeners();
 
     _userName = await _storage.getUsername() ?? 'Kullanıcı';
     _userEmail = await _storage.getEmail() ?? '';
+    _hasPremiumSubscription = false;
+    _subscriptionEndsAt = null;
 
     try {
       final favoriteResult = await _movieService.getFavorites(

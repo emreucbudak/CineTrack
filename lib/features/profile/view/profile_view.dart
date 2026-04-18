@@ -8,6 +8,7 @@ import 'package:cinetrack/data/services/movie_service.dart';
 import 'package:cinetrack/features/actor/view/actor_detail_view.dart';
 import 'package:cinetrack/features/auth/view/login_view.dart';
 import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
+import 'package:cinetrack/features/profile/view/premium_frontend_sheet.dart';
 import 'package:cinetrack/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -128,6 +129,13 @@ class _ProfileViewState extends State<ProfileView> {
                   'Takip Edilen Kişi',
                   '${_viewModel.followedActorsCount}',
                 ),
+                const SizedBox(height: 12),
+                _buildPremiumSpotlightCard(
+                  onTap: () {
+                    Navigator.pop(context);
+                    _handleSubscriptionAction();
+                  },
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -174,6 +182,36 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
+  Future<void> _showPremiumSheet() async {
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PremiumFrontendSheet(
+        initialEmail: _viewModel.userEmail,
+        initialName: _viewModel.userName,
+      ),
+    );
+  }
+
+  void _handleSubscriptionAction() {
+    if (_viewModel.hasPremiumSubscription) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Abonelik iptal akışını backend bağlandığında aktif edeceğiz.',
+          ),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+      return;
+    }
+
+    _showPremiumSheet();
+  }
+
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -195,6 +233,263 @@ class _ProfileViewState extends State<ProfileView> {
                 fontWeight: FontWeight.w600,
                 color: AppColors.textLight,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumSpotlightCard({required VoidCallback onTap}) {
+    final isPremium = _viewModel.hasPremiumSubscription;
+    final actionLabel = isPremium ? 'Aboneliği İptal Et' : 'Premium Al';
+    final actionColor = isPremium
+        ? const Color(0xFF9F2D33)
+        : const Color(0xFFE7B44C);
+    final actionForegroundColor = isPremium
+        ? Colors.white
+        : AppColors.backgroundDark;
+    final accentColor = isPremium
+        ? const Color(0xFFE7B44C)
+        : const Color(0xFF8C6B2D);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF191214), Color(0xFF25181C), Color(0xFF342326)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: accentColor.withValues(alpha: isPremium ? 0.38 : 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: isPremium ? 0.16 : 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+                ),
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  color: accentColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Abonelik Yönetimi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isPremium
+                          ? 'Premium planınız aktif. Ayrıcalıklarınız kesintisiz devam ediyor.'
+                          : 'Şu anda standart plandasınız. Premium ile deneyimi daha güçlü hale getirebilirsiniz.',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: isPremium ? 0.14 : 0.1),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Text(
+                  _viewModel.subscriptionPlanLabel,
+                  style: TextStyle(
+                    color: isPremium ? accentColor : Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSubscriptionInfoTile(
+                  label: 'Plan',
+                  value: _viewModel.subscriptionPlanLabel,
+                  icon: Icons.layers_outlined,
+                  accentColor: accentColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSubscriptionInfoTile(
+                  label: 'Bitiş Tarihi',
+                  value: _viewModel.subscriptionEndsAtLabel,
+                  icon: Icons.event_outlined,
+                  accentColor: accentColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aboneliği Yönet',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Planınızı görüntüleyin, yükseltin veya iptal akışını buradan yönetin.',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onTap,
+              icon: Icon(
+                isPremium ? Icons.close_rounded : Icons.arrow_outward_rounded,
+              ),
+              label: Text(
+                actionLabel,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: actionColor,
+                foregroundColor: actionForegroundColor,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionInfoTile({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color accentColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF120D0F),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accentColor, size: 18),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
