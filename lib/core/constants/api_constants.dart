@@ -20,7 +20,11 @@ class ApiConstants {
 
   // Auth Endpoints
   static const String login = '/auth/login';
+  static const String verifyLogin = '/auth/login/verify';
   static const String register = '/auth/register';
+  static const String verifyRegister = '/auth/register/verify';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String verifyForgotPassword = '/auth/forgot-password/verify';
   static const String refreshToken = '/auth/refresh';
   static const String revokeToken = '/auth/revoke';
 

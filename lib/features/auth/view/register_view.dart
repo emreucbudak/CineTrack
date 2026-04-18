@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
+import 'package:cinetrack/features/auth/view/register_code_verification_view.dart';
 import 'package:cinetrack/features/auth/viewmodel/register_viewmodel.dart';
 
 class RegisterView extends StatefulWidget {
@@ -22,6 +23,9 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   void _onViewModelChanged() {
+    if (!mounted) {
+      return;
+    }
     setState(() {});
     if (_viewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -51,9 +55,33 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Future<void> _handleRegister() async {
-    final success = await _viewModel.register();
-    if (success && mounted) {
-      Navigator.pop(context);
+    final result = await _viewModel.register();
+    if (!mounted) {
+      return;
+    }
+
+    switch (result.status) {
+      case RegisterFlowStatus.success:
+        Navigator.pop(context);
+        break;
+      case RegisterFlowStatus.requiresVerification:
+        final temporaryToken = result.temporaryToken;
+        if (temporaryToken == null || temporaryToken.isEmpty) {
+          return;
+        }
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RegisterCodeVerificationView(
+              email: result.email ?? _viewModel.emailController.text.trim(),
+              temporaryToken: temporaryToken,
+            ),
+          ),
+        );
+        break;
+      case RegisterFlowStatus.failure:
+        break;
     }
   }
 
@@ -118,7 +146,6 @@ class _RegisterViewState extends State<RegisterView> {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 40,
-            spreadRadius: 0,
           ),
         ],
       ),
@@ -172,7 +199,7 @@ class _RegisterViewState extends State<RegisterView> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
+        const Text(
           'Sinema tutkunları için hazırlanan topluluğa katılın.',
           style: TextStyle(fontSize: 16, color: AppColors.textMuted),
         ),
@@ -184,7 +211,7 @@ class _RegisterViewState extends State<RegisterView> {
     return Column(
       children: [
         _buildTextField(
-          label: 'E-POSTA ADRESİ',
+          label: 'E-posta Adresi',
           hint: 'name@example.com',
           icon: Icons.mail_outline,
           controller: _viewModel.emailController,
@@ -192,14 +219,14 @@ class _RegisterViewState extends State<RegisterView> {
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'KULLANICI ADI',
+          label: 'Kullanıcı Adı',
           hint: 'Bir kullanıcı adı seçin',
           icon: Icons.person_outline,
           controller: _viewModel.usernameController,
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'ŞİFRE',
+          label: 'Şifre',
           hint: 'Bir şifre oluşturun',
           icon: Icons.lock_outline,
           controller: _viewModel.passwordController,
@@ -209,13 +236,19 @@ class _RegisterViewState extends State<RegisterView> {
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'ŞİFRE TEKRARI',
+          label: 'Şifre Tekrarı',
           hint: 'Şifrenizi tekrar girin',
           icon: Icons.shield_outlined,
           controller: _viewModel.confirmPasswordController,
           isPassword: true,
           obscure: _viewModel.obscureConfirmPassword,
           onToggleVisibility: _viewModel.toggleConfirmPasswordVisibility,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Kaydı tamamlamak için e-posta doğrulama kodu göndereceğiz.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
         SizedBox(
@@ -268,7 +301,7 @@ class _RegisterViewState extends State<RegisterView> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
@@ -340,7 +373,7 @@ class _RegisterViewState extends State<RegisterView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
+          const Text(
             'Zaten hesabın var mı? ',
             style: TextStyle(color: AppColors.textMuted),
           ),

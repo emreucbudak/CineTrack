@@ -1,10 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:cinetrack/data/models/auth_models.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
 
-class LoginViewModel extends ChangeNotifier {
-  final AuthService _authService;
+enum LoginFlowStatus { authenticated, pendingVerification, failure }
 
+class LoginFlowResult {
+  const LoginFlowResult._({
+    required this.status,
+    this.email,
+    this.temporaryToken,
+    this.errorMessage,
+  });
+
+  const LoginFlowResult.authenticated()
+    : this._(status: LoginFlowStatus.authenticated);
+
+  const LoginFlowResult.pendingVerification({
+    required String email,
+    required String temporaryToken,
+  }) : this._(
+         status: LoginFlowStatus.pendingVerification,
+         email: email,
+         temporaryToken: temporaryToken,
+       );
+
+  const LoginFlowResult.failure(String message)
+    : this._(status: LoginFlowStatus.failure, errorMessage: message);
+
+  final LoginFlowStatus status;
+  final String? email;
+  final String? temporaryToken;
+  final String? errorMessage;
+
+  bool get isAuthenticated => status == LoginFlowStatus.authenticated;
+  bool get needsVerification => status == LoginFlowStatus.pendingVerification;
+}
+
+class LoginViewModel extends ChangeNotifier {
   LoginViewModel(this._authService);
+
+  final AuthService _authService;
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -27,28 +62,43 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> login() async {
+  Future<LoginFlowResult> login() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       _errorMessage = 'Lütfen tüm alanları doldurun.';
       notifyListeners();
-      return false;
+      return const LoginFlowResult.failure('Lütfen tüm alanları doldurun.');
     }
 
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.login(email: email, password: password);
+    final PendingAuthResult result = await _authService.login(
+      email: email,
+      password: password,
+    );
 
     _isLoading = false;
-    if (!result.success) {
-      _errorMessage = result.error;
+
+    if (result.isPending && result.data != null) {
+      notifyListeners();
+      return LoginFlowResult.pendingVerification(
+        email: result.data!.email,
+        temporaryToken: result.data!.temporaryToken,
+      );
     }
+
+    if (result.success) {
+      notifyListeners();
+      return const LoginFlowResult.authenticated();
+    }
+
+    _errorMessage = result.error ?? 'Giriş başarısız.';
     notifyListeners();
-    return result.success;
+    return LoginFlowResult.failure(_errorMessage!);
   }
 
   @override

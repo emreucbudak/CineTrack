@@ -1,8 +1,10 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+
 import 'package:cinetrack/core/constants/api_constants.dart';
 import 'package:cinetrack/core/network/dio_client.dart';
 import 'package:cinetrack/core/services/storage_service.dart';
 import 'package:cinetrack/data/models/auth_models.dart';
+import 'package:dio/dio.dart';
 
 class AuthService {
   final DioClient _client;
@@ -10,138 +12,314 @@ class AuthService {
 
   AuthService(this._client, this._storage);
 
-  Future<({bool success, String? error})> login({
+  Future<PendingAuthResult> login({
     required String email,
     required String password,
   }) async {
+    return _submitPendingStep(
+      endpoint: ApiConstants.login,
+      payload: {'email': email, 'password': password},
+      fallbackError: 'Giriş isteği başarısız.',
+      fallbackPendingMessage: 'Doğrulama kodu gönderildi.',
+    );
+  }
+
+  Future<TokenAuthResult> verifyLoginCode({
+    required String temporaryToken,
+    required String code,
+  }) async {
     try {
       final response = await _client.dio.post(
-        ApiConstants.login,
-        data: {'email': email, 'password': password},
+        ApiConstants.verifyLogin,
+        data: {'temporaryToken': temporaryToken, 'code': code},
       );
 
-      if (response.data['success'] == true) {
-        final token = AuthTokenResponse.fromJson(response.data['data']);
-        await _storage.saveToken(token.token);
-        await _storage.saveRefreshToken(token.refreshToken);
-
-        // Decode basic user info from JWT payload
-        final parts = token.token.split('.');
-        if (parts.length == 3) {
-          final payload = _decodeJwtPayload(parts[1]);
-          if (payload != null) {
-            await _storage.saveUserInfo(
-              userId: payload['sub'] ?? '',
-              username: payload['username'] ?? '',
-              email: payload['email'] ?? '',
-            );
-          }
+      final body = _asMap(response.data);
+      if (_isSuccess(body)) {
+        final token = AuthTokenResponse.fromJson(_extractPayload(body));
+        if (token.token.isEmpty) {
+          return const AuthResult.failure(
+            error: 'Sunucudan geçerli oturum bilgisi alınamadı.',
+          );
         }
-        return (success: true, error: null);
+
+        await _persistAuthSession(token);
+
+        return AuthResult.success(
+          data: token,
+          message: _extractMessage(body) ?? 'Giriş doğrulandı.',
+        );
       }
-      return (
-        success: false,
-        error: (response.data['errorMessage'] as String?) ?? 'Giriş başarısız.',
+
+      return AuthResult.failure(
+        error: _extractError(body) ?? 'Giriş doğrulaması başarısız.',
+        message: _extractMessage(body),
       );
     } on DioException catch (e) {
-      return (
-        success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+      return AuthResult.failure(
+        error: _extractDioError(e, 'Giriş doğrulaması başarısız.'),
+        message: _extractMessage(_asMap(e.response?.data)),
       );
     }
   }
 
-  Future<({bool success, String? error})> register({
+  Future<PendingAuthResult> register({
     required String email,
     required String username,
     required String password,
   }) async {
-    try {
-      final response = await _client.dio.post(
-        ApiConstants.register,
-        data: {
-          'email': email,
-          'username': username,
-          'password': password,
-        },
-      );
+    return _submitPendingStep(
+      endpoint: ApiConstants.register,
+      payload: {'email': email, 'username': username, 'password': password},
+      fallbackError: 'Kayıt isteği başarısız.',
+      fallbackPendingMessage: 'Kayıt doğrulama kodu gönderildi.',
+    );
+  }
 
-      if (response.statusCode == 201 && response.data['success'] == true) {
-        return (success: true, error: null);
+  Future<MessageAuthResult> verifyRegisterCode({
+    required String temporaryToken,
+    required String code,
+  }) async {
+    return _submitMessageStep(
+      endpoint: ApiConstants.verifyRegister,
+      payload: {'temporaryToken': temporaryToken, 'code': code},
+      fallbackError: 'Kayıt doğrulaması başarısız.',
+      fallbackSuccessMessage: 'Kayıt doğrulandı.',
+    );
+  }
+
+  Future<PendingAuthResult> requestPasswordReset({
+    required String email,
+    required String newPassword,
+  }) async {
+    return _submitPendingStep(
+      endpoint: ApiConstants.forgotPassword,
+      payload: {'email': email, 'newPassword': newPassword},
+      fallbackError: 'Şifre sıfırlama isteği başarısız.',
+      fallbackPendingMessage: 'Şifre sıfırlama kodu gönderildi.',
+    );
+  }
+
+  Future<MessageAuthResult> verifyPasswordResetCode({
+    required String temporaryToken,
+    required String code,
+  }) async {
+    return _submitMessageStep(
+      endpoint: ApiConstants.verifyForgotPassword,
+      payload: {
+        'temporaryToken': temporaryToken,
+        'code': code,
+      },
+      fallbackError: 'Şifre sıfırlama doğrulaması başarısız.',
+      fallbackSuccessMessage: 'Şifreniz başarıyla güncellendi.',
+    );
+  }
+
+  Future<AuthResult<void>> logout() async {
+    try {
+      final refreshToken = await _storage.getRefreshToken();
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        try {
+          await _client.dio.post(
+            ApiConstants.revokeToken,
+            data: {'refreshToken': refreshToken},
+          );
+        } on DioException {
+          // Local sign-out should still succeed even if revoke fails.
+        }
       }
-      return (
-        success: false,
-        error: (response.data['errorMessage'] as String?) ?? 'Kayıt işlemi başarısız.',
-      );
-    } on DioException catch (e) {
-      return (
-        success: false,
-        error: (e.response?.data?['errorMessage'] as String?) ?? 'Bağlantı hatası.',
+
+      await _storage.clearAll();
+
+      return const AuthResult.success(message: 'Oturum kapatıldı.');
+    } catch (_) {
+      return const AuthResult.failure(
+        error: 'Oturum kapatılırken bir hata oluştu.',
       );
     }
   }
 
-  Future<void> logout() async {
+  Future<PendingAuthResult> _submitPendingStep({
+    required String endpoint,
+    required Map<String, dynamic> payload,
+    required String fallbackError,
+    required String fallbackPendingMessage,
+  }) async {
     try {
-      final refreshToken = await _storage.getRefreshToken();
-      if (refreshToken != null) {
-        await _client.dio.post(
-          ApiConstants.revokeToken,
-          data: {'refreshToken': refreshToken},
+      final response = await _client.dio.post(endpoint, data: payload);
+      final body = _asMap(response.data);
+
+      if (_isSuccess(body)) {
+        final pending = PendingVerificationResponse.fromJson(
+          _extractPayload(body),
+        );
+
+        if (pending.temporaryToken.isEmpty) {
+          return const AuthResult.failure(
+            error: 'Sunucudan geçerli doğrulama bilgisi alınamadı.',
+          );
+        }
+
+        return AuthResult.pending(
+          data: pending,
+          message: _extractMessage(body) ?? fallbackPendingMessage,
         );
       }
-    } catch (_) {
-      // Ignore revoke errors
-    } finally {
-      await _storage.clearAll();
+
+      return AuthResult.failure(
+        error: _extractError(body) ?? fallbackError,
+        message: _extractMessage(body),
+      );
+    } on DioException catch (e) {
+      return AuthResult.failure(
+        error: _extractDioError(e, fallbackError),
+        message: _extractMessage(_asMap(e.response?.data)),
+      );
     }
+  }
+
+  Future<MessageAuthResult> _submitMessageStep({
+    required String endpoint,
+    required Map<String, dynamic> payload,
+    required String fallbackError,
+    required String fallbackSuccessMessage,
+  }) async {
+    try {
+      final response = await _client.dio.post(endpoint, data: payload);
+      final body = _asMap(response.data);
+
+      if (_isSuccess(body)) {
+        final payloadMap = _extractPayload(body);
+        final messageResponse = payloadMap.isNotEmpty
+            ? AuthMessageResponse.fromJson(payloadMap)
+            : AuthMessageResponse(
+                message: _extractMessage(body) ?? fallbackSuccessMessage,
+              );
+        final message = messageResponse.message.isNotEmpty
+            ? messageResponse.message
+            : _extractMessage(body) ?? fallbackSuccessMessage;
+
+        return AuthResult.success(
+          data: AuthMessageResponse(message: message),
+          message: message,
+        );
+      }
+
+      return AuthResult.failure(
+        error: _extractError(body) ?? fallbackError,
+        message: _extractMessage(body),
+      );
+    } on DioException catch (e) {
+      return AuthResult.failure(
+        error: _extractDioError(e, fallbackError),
+        message: _extractMessage(_asMap(e.response?.data)),
+      );
+    }
+  }
+
+  Future<void> _persistAuthSession(AuthTokenResponse token) async {
+    await _storage.saveToken(token.token);
+
+    if (token.refreshToken.isNotEmpty) {
+      await _storage.saveRefreshToken(token.refreshToken);
+    } else {
+      await _storage.deleteRefreshToken();
+    }
+
+    final parts = token.token.split('.');
+    if (parts.length != 3) {
+      return;
+    }
+
+    final payload = _decodeJwtPayload(parts[1]);
+    if (payload == null) {
+      return;
+    }
+
+    await _storage.saveUserInfo(
+      userId:
+          _firstNonBlank([payload['sub'], payload['nameid'], payload['id']]) ??
+          '',
+      username:
+          _firstNonBlank([
+            payload['username'],
+            payload['unique_name'],
+            payload['name'],
+          ]) ??
+          '',
+      email: _firstNonBlank([payload['email']]) ?? '',
+    );
+  }
+
+  bool _isSuccess(Map<String, dynamic> body) => body['success'] == true;
+
+  Map<String, dynamic> _extractPayload(Map<String, dynamic> body) =>
+      _asMap(body['data']);
+
+  String? _extractMessage(Map<String, dynamic> body) {
+    final data = body['data'];
+    final payload = _asMap(data);
+
+    return _firstNonBlank([
+      body['message'],
+      body['successMessage'],
+      data is String ? data : null,
+      payload['message'],
+      payload['successMessage'],
+    ]);
+  }
+
+  String? _extractError(Map<String, dynamic> body) {
+    final payload = _asMap(body['data']);
+
+    return _firstNonBlank([
+      body['errorMessage'],
+      body['message'],
+      payload['errorMessage'],
+      payload['message'],
+    ]);
+  }
+
+  String _extractDioError(DioException error, String fallback) {
+    final responseData = error.response?.data;
+    if (responseData is String && responseData.trim().isNotEmpty) {
+      return responseData.trim();
+    }
+
+    return _extractError(_asMap(responseData)) ?? fallback;
   }
 
   Map<String, dynamic>? _decodeJwtPayload(String base64Payload) {
     try {
-      String normalized = base64Payload.replaceAll('-', '+').replaceAll('_', '/');
-      while (normalized.length % 4 != 0) {
-        normalized += '=';
-      }
-      final bytes = _base64Decode(normalized);
-      final jsonStr = String.fromCharCodes(bytes);
-      return _parseSimpleJson(jsonStr);
+      final decoded = utf8.decode(
+        base64Url.decode(base64Url.normalize(base64Payload)),
+      );
+      return _asMap(jsonDecode(decoded));
     } catch (_) {
       return null;
     }
   }
 
-  List<int> _base64Decode(String input) {
-    // Use dart:convert indirectly through Uri
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    final output = <int>[];
-    var buffer = 0;
-    var bits = 0;
-    for (final char in input.codeUnits) {
-      if (char == 61) break; // '='
-      final val = chars.indexOf(String.fromCharCode(char));
-      if (val == -1) continue;
-      buffer = (buffer << 6) | val;
-      bits += 6;
-      if (bits >= 8) {
-        bits -= 8;
-        output.add((buffer >> bits) & 0xFF);
-      }
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
     }
-    return output;
+
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key.toString(), item));
+    }
+
+    return <String, dynamic>{};
   }
 
-  Map<String, dynamic>? _parseSimpleJson(String json) {
-    try {
-      // Use RegExp to extract key-value pairs
-      final map = <String, dynamic>{};
-      final regex = RegExp(r'"(\w+)"\s*:\s*"([^"]*)"');
-      for (final match in regex.allMatches(json)) {
-        map[match.group(1)!] = match.group(2)!;
+  String? _firstNonBlank(Iterable<dynamic> values) {
+    for (final value in values) {
+      final text = value?.toString().trim();
+      if (text != null && text.isNotEmpty) {
+        return text;
       }
-      return map;
-    } catch (_) {
-      return null;
     }
+
+    return null;
   }
 }
