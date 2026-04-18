@@ -65,14 +65,7 @@ class _LoginViewState extends State<LoginView> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLoginCard(),
-                    const SizedBox(height: 32),
-                    _buildFooterLinks(),
-                  ],
-                ),
+                child: _buildLoginCard(),
               ),
             ),
           ),
@@ -117,9 +110,7 @@ class _LoginViewState extends State<LoginView> {
       decoration: BoxDecoration(
         color: const Color(0xFF120808).withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
@@ -168,11 +159,8 @@ class _LoginViewState extends State<LoginView> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Sinematik yolculuğunuz burada başlıyor',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textMuted,
-          ),
+          'Sinematik yolculugunuz burada basliyor',
+          style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
       ],
     );
@@ -215,18 +203,11 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   )
                 : const Text(
-                    'Giriş Yap',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    'Giris Yap',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ),
-        const SizedBox(height: 24),
-        _buildDivider(),
-        const SizedBox(height: 24),
-        _buildSocialButtons(),
       ],
     );
   }
@@ -265,19 +246,32 @@ class _LoginViewState extends State<LoginView> {
               padding: const EdgeInsets.only(left: 16, right: 12),
               child: Icon(icon, color: Colors.grey.shade600, size: 20),
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade800.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade800.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+              borderSide: BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
           ),
         ),
@@ -295,7 +289,7 @@ class _LoginViewState extends State<LoginView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Şifre',
+                'Sifre',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -305,11 +299,8 @@ class _LoginViewState extends State<LoginView> {
               GestureDetector(
                 onTap: () {},
                 child: const Text(
-                  'Şifrenizi mi unuttunuz?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary,
-                  ),
+                  'Sifrenizi mi unuttunuz?',
+                  style: TextStyle(fontSize: 12, color: AppColors.primary),
                 ),
               ),
             ],
@@ -320,15 +311,22 @@ class _LoginViewState extends State<LoginView> {
           obscureText: _viewModel.obscurePassword,
           style: const TextStyle(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
-            hintText: '••••••••',
+            hintText: '********',
             hintStyle: TextStyle(color: Colors.grey.shade600),
             filled: true,
             fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
-              child: Icon(Icons.lock_outline, color: Colors.grey.shade600, size: 20),
+              child: Icon(
+                Icons.lock_outline,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             suffixIcon: IconButton(
               onPressed: _viewModel.togglePasswordVisibility,
               icon: Icon(
@@ -339,100 +337,32 @@ class _LoginViewState extends State<LoginView> {
                 size: 20,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade800.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade800.withValues(alpha: 0.5)),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: Colors.grey.shade800.withValues(alpha: 0.5))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'VEYA ŞUNUNLA DEVAM ET',
-            style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 0.5,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: Colors.grey.shade800.withValues(alpha: 0.5))),
-      ],
-    );
-  }
-
-  Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _socialButton(
-            icon: Icons.g_mobiledata,
-            label: 'Google',
-            onTap: () {},
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _socialButton(
-            icon: Icons.facebook,
-            label: 'Facebook',
-            onTap: () {},
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _socialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.grey.shade900.withValues(alpha: 0.4),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.shade800.withValues(alpha: 0.5)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.grey.shade200, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade200,
-                ),
+              borderSide: BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.5),
+                width: 2,
               ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -441,7 +371,7 @@ class _LoginViewState extends State<LoginView> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Hesabınız yok mu? ",
+          'Hesabiniz yok mu? ',
           style: TextStyle(fontSize: 14, color: AppColors.textMuted),
         ),
         GestureDetector(
@@ -452,7 +382,7 @@ class _LoginViewState extends State<LoginView> {
             );
           },
           child: const Text(
-            'Kayıt Ol',
+            'Kayit Ol',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -462,57 +392,5 @@ class _LoginViewState extends State<LoginView> {
         ),
       ],
     );
-  }
-
-  Widget _buildFooterLinks() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _footerLink('GİZLİLİK POLİTİKASI'),
-        _dot(),
-        _footerLink('KULLANIM KOŞULLARI'),
-        _dot(),
-        _footerLink('YARDIM MERKEZİ'),
-      ],
-    );
-  }
-
-  Widget _footerLink(String text) {
-    return GestureDetector(
-      onTap: () {},
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 1.2,
-          color: Colors.grey.shade600,
-        ),
-      ),
-    );
-  }
-
-  Widget _footerSeparator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Icon(
-        Icons.circle,
-        color: Colors.grey.shade600,
-        size: 4,
-      ),
-    );
-  }
-
-  Widget _dot() {
-    return _footerSeparator();
-    /*
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Text(
-        '·',
-        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-      ),
-    );
-    */
   }
 }

@@ -60,76 +60,123 @@ class _RegisterViewState extends State<RegisterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
+      backgroundColor: const Color(0xFF120808),
+      body: Stack(
+        children: [
+          _buildBackground(),
+          SafeArea(
+            child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 32),
-                    _buildTitle(),
-                    const SizedBox(height: 40),
-                    _buildForm(),
-                    const SizedBox(height: 32),
-                    _buildDivider(),
-                    const SizedBox(height: 20),
-                    _buildSocialButtons(),
-                    const SizedBox(height: 32),
-                    _buildLoginLink(),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildRegisterCard(),
               ),
             ),
-            _buildBottomNav(),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackground() {
+    return Positioned.fill(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuCrybqyVay85mnj_tSdq0p6o5JgHwOg_tHy_kMOBYKzcwyS1w1g0EU0DDpNqiKGohWY342rncBIBHjhAbAxX2HoSujKcn6AJX6DJNU7ijab5aGc5U_WkZJyUUb7t47uZF0Eu3y_zjwAFD1ZPacWIYVXNsGIJbWMIZOXjQ-wvDxLLStET_4nODJhp8ZFjomZZOXvKWRi98pIAJop72KqwFtElsDhalaKCeCdvCbdRNMZygPwCF009dZPyKcgIFxA67lqDTF2AHLyEMg',
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF120808).withValues(alpha: 0.8),
+                  const Color(0xFF120808).withValues(alpha: 0.6),
+                  const Color(0xFF120808).withValues(alpha: 0.95),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegisterCard() {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFF120808).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 40,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildTitle(),
+          const SizedBox(height: 32),
+          _buildForm(),
+          const SizedBox(height: 32),
+          _buildLoginLink(),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.maybePop(context),
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
-              padding: EdgeInsets.zero,
-            ),
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
           ),
-          Row(
-            children: [
-              Icon(Icons.movie, color: AppColors.primary, size: 28),
-              const SizedBox(width: 8),
-              const Text(
+          child: IconButton(
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(
+              Icons.arrow_back,
+              color: AppColors.primary,
+              size: 20,
+            ),
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.movie_filter, color: AppColors.primary, size: 28),
+              SizedBox(width: 8),
+              Text(
                 'CineTrack',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textLight,
+                  color: Colors.white,
                   letterSpacing: -0.5,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 40),
-        ],
-      ),
+        ),
+        const SizedBox(width: 40),
+      ],
     );
   }
 
@@ -137,21 +184,21 @@ class _RegisterViewState extends State<RegisterView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hesap Oluştur',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textLight,
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Hesap Olustur',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Sinema tutkunları için hazırlanan topluluğa katılın.',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppColors.textSecondary,
-          ),
+          'Sinema tutkunlari icin hazirlanan topluluga katilin.',
+          style: TextStyle(fontSize: 16, color: AppColors.textMuted),
         ),
       ],
     );
@@ -161,7 +208,7 @@ class _RegisterViewState extends State<RegisterView> {
     return Column(
       children: [
         _buildTextField(
-          label: 'E-POSTA ADRESİ',
+          label: 'E-POSTA ADRESI',
           hint: 'name@example.com',
           icon: Icons.mail_outline,
           controller: _viewModel.emailController,
@@ -170,14 +217,14 @@ class _RegisterViewState extends State<RegisterView> {
         const SizedBox(height: 24),
         _buildTextField(
           label: 'KULLANICI ADI',
-          hint: 'Bir kullanıcı adı seçin',
+          hint: 'Bir kullanici adi secin',
           icon: Icons.person_outline,
           controller: _viewModel.usernameController,
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'ŞİFRE',
-          hint: 'Bir şifre oluşturun',
+          label: 'SIFRE',
+          hint: 'Bir sifre olusturun',
           icon: Icons.lock_outline,
           controller: _viewModel.passwordController,
           isPassword: true,
@@ -186,8 +233,8 @@ class _RegisterViewState extends State<RegisterView> {
         ),
         const SizedBox(height: 24),
         _buildTextField(
-          label: 'ŞİFRE TEKRARI',
-          hint: 'Şifrenizi tekrar girin',
+          label: 'SIFRE TEKRARI',
+          hint: 'Sifrenizi tekrar girin',
           icon: Icons.shield_outlined,
           controller: _viewModel.confirmPasswordController,
           isPassword: true,
@@ -219,11 +266,8 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                   )
                 : const Text(
-                    'Kayıt Ol',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Kayit Ol',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
           ),
         ),
@@ -252,7 +296,7 @@ class _RegisterViewState extends State<RegisterView> {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
-              color: AppColors.textSecondary,
+              color: AppColors.textMuted,
             ),
           ),
         ),
@@ -260,89 +304,54 @@ class _RegisterViewState extends State<RegisterView> {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: isPassword && obscure,
-          style: const TextStyle(color: AppColors.textLight, fontSize: 16),
+          style: const TextStyle(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: AppColors.textMuted),
+            hintStyle: TextStyle(color: Colors.grey.shade600),
             filled: true,
-            fillColor: AppColors.primary.withValues(alpha: 0.05),
+            fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
-              child: Icon(icon, color: AppColors.textMuted, size: 22),
+              child: Icon(icon, color: Colors.grey.shade600, size: 20),
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
             suffixIcon: isPassword
                 ? IconButton(
                     onPressed: onToggleVisibility,
                     icon: Icon(
-                      obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: AppColors.textMuted,
-                      size: 22,
+                      obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.grey.shade600,
+                      size: 20,
                     ),
                   )
                 : null,
-            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 16,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.transparent, width: 2),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.grey.shade800.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: AppColors.primary.withValues(alpha: 0.1))),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'Veya şununla kaydolun',
-            style: TextStyle(fontSize: 14, color: AppColors.textMuted),
-          ),
-        ),
-        Expanded(child: Divider(color: AppColors.primary.withValues(alpha: 0.1))),
-      ],
-    );
-  }
-
-  Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Text('G', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            label: const Text('Google'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textLight,
-              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1), width: 2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.apple, size: 22),
-            label: const Text('Apple'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textLight,
-              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1), width: 2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
           ),
         ),
@@ -356,13 +365,13 @@ class _RegisterViewState extends State<RegisterView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Zaten hesabınız var mı? ',
-            style: TextStyle(color: AppColors.textSecondary),
+            'Zaten hesabin var mi? ',
+            style: TextStyle(color: AppColors.textMuted),
           ),
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: const Text(
-              'Giriş Yap',
+              'Giris Yap',
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
@@ -370,38 +379,6 @@ class _RegisterViewState extends State<RegisterView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.backgroundDark,
-        border: Border(
-          top: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildNavItem(Icons.home_outlined, false),
-          _buildNavItem(Icons.movie_outlined, false),
-          _buildNavItem(Icons.confirmation_number_outlined, false),
-          _buildNavItem(Icons.person, true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isActive) {
-    return IconButton(
-      onPressed: () {},
-      icon: Icon(
-        icon,
-        color: isActive ? AppColors.primary : AppColors.textMuted,
-        size: 28,
       ),
     );
   }
