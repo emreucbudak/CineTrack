@@ -138,44 +138,20 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Widget _buildHeader() {
-    return Row(
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            onPressed: () => Navigator.maybePop(context),
-            icon: const Icon(
-              Icons.arrow_back,
-              color: AppColors.primary,
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
+        Icon(Icons.movie_filter, color: AppColors.primary, size: 28),
+        SizedBox(width: 8),
+        Text(
+          'CineTrack',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: -0.5,
           ),
         ),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.movie_filter, color: AppColors.primary, size: 28),
-              SizedBox(width: 8),
-              Text(
-                'CineTrack',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 40),
       ],
     );
   }
