@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
 import 'package:cinetrack/features/auth/view/forgot_password_code_verification_view.dart';
 import 'package:cinetrack/features/auth/viewmodel/forgot_password_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key});
@@ -83,16 +83,15 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     }
 
     if (result.isSuccess) {
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.message ?? 'Şifreniz yenilendi. Giriş ekranına dönebilirsiniz.',
+            result.message ??
+                'Şifre sıfırlama kodu gönderildi. Devam etmek için e-postanızı kontrol edin.',
           ),
           backgroundColor: Colors.green.shade700,
         ),
       );
-      Navigator.pop(context);
     }
   }
 
@@ -154,10 +153,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 40,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 40),
         ],
       ),
       child: Column(
@@ -211,9 +207,13 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          'E-posta adresinizi ve yeni şifrenizi girin. Uygunsa size bir doğrulama kodu göndereceğiz.',
-          style: TextStyle(fontSize: 15, color: AppColors.textMuted, height: 1.5),
+        const Text(
+          'Önce e-posta adresinizi girin. Ardından size bir doğrulama kodu göndereceğiz.',
+          style: TextStyle(
+            fontSize: 15,
+            color: AppColors.textMuted,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -228,22 +228,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           icon: Icons.mail_outline,
           controller: _viewModel.emailController,
           keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 24),
-        _buildPasswordField(
-          label: 'Yeni Şifre',
-          hint: 'Yeni şifrenizi girin',
-          controller: _viewModel.newPasswordController,
-          obscureText: _viewModel.obscureNewPassword,
-          onToggleVisibility: _viewModel.toggleNewPasswordVisibility,
-        ),
-        const SizedBox(height: 24),
-        _buildPasswordField(
-          label: 'Şifre Tekrarı',
-          hint: 'Yeni şifrenizi tekrar girin',
-          controller: _viewModel.confirmPasswordController,
-          obscureText: _viewModel.obscureConfirmPassword,
-          onToggleVisibility: _viewModel.toggleConfirmPasswordVisibility,
         ),
         const SizedBox(height: 28),
         SizedBox(
@@ -270,7 +254,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                   )
                 : const Text(
-                    'Doğrulama Kodunu Gönder',
+                    'E-postaya Kod Gönder',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
@@ -316,87 +300,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
             prefixIconConstraints: const BoxConstraints(
               minWidth: 0,
               minHeight: 0,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 16,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: Colors.grey.shade800.withValues(alpha: 0.5),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: Colors.grey.shade800.withValues(alpha: 0.5),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: AppColors.primary.withValues(alpha: 0.5),
-                width: 2,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPasswordField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required bool obscureText,
-    required VoidCallback onToggleVisibility,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade300,
-            ),
-          ),
-        ),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          style: const TextStyle(color: Colors.white, fontSize: 15),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade600),
-            filled: true,
-            fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 12),
-              child: Icon(
-                Icons.lock_outline,
-                color: Colors.grey.shade600,
-                size: 20,
-              ),
-            ),
-            prefixIconConstraints: const BoxConstraints(
-              minWidth: 0,
-              minHeight: 0,
-            ),
-            suffixIcon: IconButton(
-              onPressed: onToggleVisibility,
-              icon: Icon(
-                obscureText
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.grey.shade600,
-                size: 20,
-              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               vertical: 16,

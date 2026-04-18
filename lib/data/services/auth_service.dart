@@ -90,11 +90,10 @@ class AuthService {
 
   Future<PendingAuthResult> requestPasswordReset({
     required String email,
-    required String newPassword,
   }) async {
     return _submitPendingStep(
       endpoint: ApiConstants.forgotPassword,
-      payload: {'email': email, 'newPassword': newPassword},
+      payload: {'email': email},
       fallbackError: 'Şifre sıfırlama isteği başarısız.',
       fallbackPendingMessage: 'Şifre sıfırlama kodu gönderildi.',
     );
@@ -106,11 +105,20 @@ class AuthService {
   }) async {
     return _submitMessageStep(
       endpoint: ApiConstants.verifyForgotPassword,
-      payload: {
-        'temporaryToken': temporaryToken,
-        'code': code,
-      },
+      payload: {'temporaryToken': temporaryToken, 'code': code},
       fallbackError: 'Şifre sıfırlama doğrulaması başarısız.',
+      fallbackSuccessMessage: 'Kod doğrulandı.',
+    );
+  }
+
+  Future<MessageAuthResult> completePasswordReset({
+    required String temporaryToken,
+    required String newPassword,
+  }) async {
+    return _submitMessageStep(
+      endpoint: ApiConstants.resetForgotPassword,
+      payload: {'temporaryToken': temporaryToken, 'newPassword': newPassword},
+      fallbackError: 'Şifre güncelleme işlemi başarısız.',
       fallbackSuccessMessage: 'Şifreniz başarıyla güncellendi.',
     );
   }

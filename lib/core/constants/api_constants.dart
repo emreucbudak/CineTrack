@@ -25,6 +25,7 @@ class ApiConstants {
   static const String verifyRegister = '/auth/register/verify';
   static const String forgotPassword = '/auth/forgot-password';
   static const String verifyForgotPassword = '/auth/forgot-password/verify';
+  static const String resetForgotPassword = '/auth/forgot-password/reset';
   static const String refreshToken = '/auth/refresh';
   static const String revokeToken = '/auth/revoke';
 

@@ -1,13 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
 import 'package:cinetrack/data/models/auth_models.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
-import 'package:cinetrack/features/auth/view/forgot_password_reset_view.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ForgotPasswordCodeVerificationView extends StatefulWidget {
-  const ForgotPasswordCodeVerificationView({
+class ForgotPasswordResetView extends StatefulWidget {
+  const ForgotPasswordResetView({
     super.key,
     required this.email,
     required this.temporaryToken,
@@ -17,28 +15,39 @@ class ForgotPasswordCodeVerificationView extends StatefulWidget {
   final String temporaryToken;
 
   @override
-  State<ForgotPasswordCodeVerificationView> createState() =>
-      _ForgotPasswordCodeVerificationViewState();
+  State<ForgotPasswordResetView> createState() =>
+      _ForgotPasswordResetViewState();
 }
 
-class _ForgotPasswordCodeVerificationViewState
-    extends State<ForgotPasswordCodeVerificationView> {
+class _ForgotPasswordResetViewState extends State<ForgotPasswordResetView> {
   static const String _backgroundImageUrl =
       'https://lh3.googleusercontent.com/aida-public/AB6AXuCrybqyVay85mnj_tSdq0p6o5JgHwOg_tHy_kMOBYKzcwyS1w1g0EU0DDpNqiKGohWY342rncBIBHjhAbAxX2HoSujKcn6AJX6DJNU7ijab5aGc5U_WkZJyUUb7t47uZF0Eu3y_zjwAFD1ZPacWIYVXNsGIJbWMIZOXjQ-wvDxLLStET_4nODJhp8ZFjomZZOXvKWRi98pIAJop72KqwFtElsDhalaKCeCdvCbdRNMZygPwCF009dZPyKcgIFxA67lqDTF2AHLyEMg';
 
-  final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _codeController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleVerify() async {
-    final code = _codeController.text.trim();
-    if (code.length != 6) {
-      _showSnackBar('Lütfen 6 haneli doğrulama kodunu girin.');
+  Future<void> _handleSubmit() async {
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      _showSnackBar('Lütfen yeni şifrenizi ve tekrarını girin.');
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      _showSnackBar('Şifreler eşleşmiyor.');
       return;
     }
 
@@ -47,9 +56,9 @@ class _ForgotPasswordCodeVerificationViewState
     try {
       final MessageAuthResult result = await context
           .read<AuthService>()
-          .verifyPasswordResetCode(
+          .completePasswordReset(
             temporaryToken: widget.temporaryToken,
-            code: code,
+            newPassword: newPassword,
           );
 
       if (!mounted) {
@@ -57,28 +66,55 @@ class _ForgotPasswordCodeVerificationViewState
       }
 
       if (result.success) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ForgotPasswordResetView(
-              email: widget.email,
-              temporaryToken: widget.temporaryToken,
-            ),
-          ),
+        await _showSuccessDialog(
+          result.message ??
+              'Şifreniz başarıyla yenilendi. Giriş ekranına dönebilirsiniz.',
         );
         return;
       }
 
-      _showSnackBar(result.error ?? 'Kod doğrulanamadı.');
+      _showSnackBar(result.error ?? 'Şifre güncellenemedi.');
     } catch (_) {
       if (mounted) {
-        _showSnackBar('Kod doğrulama servisi şu anda kullanılamıyor.');
+        _showSnackBar('Şifre güncelleme servisi şu anda kullanılamıyor.');
       }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _showSuccessDialog(String message) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1B1111),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Şifre yenilendi',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            message,
+            style: TextStyle(color: Colors.grey.shade300, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text('Giriş ekranına dön'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showSnackBar(String message) {
@@ -98,7 +134,7 @@ class _ForgotPasswordCodeVerificationViewState
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildVerificationCard(context),
+                child: _buildCard(),
               ),
             ),
           ),
@@ -135,7 +171,7 @@ class _ForgotPasswordCodeVerificationViewState
     );
   }
 
-  Widget _buildVerificationCard(BuildContext context) {
+  Widget _buildCard() {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 420),
@@ -166,22 +202,33 @@ class _ForgotPasswordCodeVerificationViewState
           const SizedBox(height: 24),
           _buildHeader(),
           const SizedBox(height: 32),
-          _buildCodeField(),
-          const SizedBox(height: 16),
-          Text(
-            'Doğrulama kodunu ${widget.email} adresine gönderdik.',
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textMuted,
-              height: 1.5,
-            ),
+          _buildPasswordField(
+            label: 'Yeni Şifre',
+            hint: 'Yeni şifrenizi girin',
+            controller: _newPasswordController,
+            obscureText: _obscureNewPassword,
+            onToggleVisibility: () {
+              setState(() => _obscureNewPassword = !_obscureNewPassword);
+            },
+          ),
+          const SizedBox(height: 24),
+          _buildPasswordField(
+            label: 'Yeni Şifre Tekrar',
+            hint: 'Yeni şifrenizi tekrar girin',
+            controller: _confirmPasswordController,
+            obscureText: _obscureConfirmPassword,
+            onToggleVisibility: () {
+              setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword,
+              );
+            },
           ),
           const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _isLoading ? null : _handleVerify,
+              onPressed: _isLoading ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -201,7 +248,7 @@ class _ForgotPasswordCodeVerificationViewState
                       ),
                     )
                   : const Text(
-                      'Kodu Doğrula',
+                      'Şifreni Değiştir',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -225,14 +272,14 @@ class _ForgotPasswordCodeVerificationViewState
             shape: BoxShape.circle,
           ),
           child: const Icon(
-            Icons.mark_email_read_outlined,
+            Icons.lock_outline_rounded,
             color: AppColors.primary,
             size: 34,
           ),
         ),
         const SizedBox(height: 20),
         const Text(
-          'Kodu Doğrula',
+          'Yeni Şifre Belirle',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -241,22 +288,32 @@ class _ForgotPasswordCodeVerificationViewState
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'E-postanıza gelen 6 haneli kodu doğrulayın. Sonraki adımda yeni şifrenizi belirleyeceksiniz.',
-          style: TextStyle(fontSize: 15, color: AppColors.textMuted),
+        Text(
+          '${widget.email} için yeni şifrenizi oluşturun.',
+          style: const TextStyle(
+            fontSize: 15,
+            color: AppColors.textMuted,
+            height: 1.5,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildCodeField() {
+  Widget _buildPasswordField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required bool obscureText,
+    required VoidCallback onToggleVisibility,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Doğrulama Kodu',
+            label,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -265,36 +322,18 @@ class _ForgotPasswordCodeVerificationViewState
           ),
         ),
         TextField(
-          controller: _codeController,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6),
-          ],
-          onSubmitted: (_) {
-            if (!_isLoading) {
-              _handleVerify();
-            }
-          },
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            letterSpacing: 10,
-            fontWeight: FontWeight.w600,
-          ),
+          controller: controller,
+          obscureText: obscureText,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
-            hintText: '000000',
-            hintStyle: TextStyle(
-              color: Colors.grey.shade600,
-              letterSpacing: 10,
-            ),
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade600),
             filled: true,
             fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 16, right: 12),
               child: Icon(
-                Icons.password_rounded,
+                Icons.lock_outline,
                 color: Colors.grey.shade600,
                 size: 20,
               ),
@@ -303,8 +342,18 @@ class _ForgotPasswordCodeVerificationViewState
               minWidth: 0,
               minHeight: 0,
             ),
+            suffixIcon: IconButton(
+              onPressed: onToggleVisibility,
+              icon: Icon(
+                obscureText
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.grey.shade600,
+                size: 20,
+              ),
+            ),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
+              vertical: 16,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
