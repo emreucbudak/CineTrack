@@ -110,6 +110,11 @@ class RegisterViewModel extends ChangeNotifier {
       return _failValidation('Şifreler eşleşmiyor.');
     }
 
+    final passwordValidationMessage = _validatePassword(password);
+    if (passwordValidationMessage != null) {
+      return _failValidation(passwordValidationMessage);
+    }
+
     _isLoading = true;
     _errorMessage = null;
     _successMessage = null;
@@ -158,6 +163,42 @@ class RegisterViewModel extends ChangeNotifier {
     _successMessage = null;
     notifyListeners();
     return RegisterFlowResult.failure(error: message);
+  }
+
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return 'Şifre en az 8 karakter olmalıdır.';
+    }
+
+    if (password.length > 128) {
+      return 'Şifre en fazla 128 karakter olabilir.';
+    }
+
+    var hasLetter = false;
+    var hasDigit = false;
+
+    for (final codePoint in password.runes) {
+      final character = String.fromCharCode(codePoint);
+      final isDigit = RegExp(r'^[0-9]$').hasMatch(character);
+      final isLetter = RegExp(r'^[A-Za-zÇĞİÖŞÜçğıöşü]$').hasMatch(character);
+
+      if (!isDigit && !isLetter) {
+        return 'Şifre yalnızca harf ve rakamlardan oluşmalıdır.';
+      }
+
+      hasDigit = hasDigit || isDigit;
+      hasLetter = hasLetter || isLetter;
+    }
+
+    if (!hasLetter) {
+      return 'Şifre en az bir harf içermelidir.';
+    }
+
+    if (!hasDigit) {
+      return 'Şifre en az bir rakam içermelidir.';
+    }
+
+    return null;
   }
 
   @override
@@ -229,7 +270,8 @@ class RegisterCodeVerificationViewModel extends ChangeNotifier {
       }
 
       _errorMessage =
-          result.error ?? 'Doğrulama kodu geçersiz veya süresi dolmuş olabilir.';
+          result.error ??
+          'Doğrulama kodu geçersiz veya süresi dolmuş olabilir.';
       notifyListeners();
       return RegisterCodeVerificationResult.failure(error: _errorMessage!);
     } catch (_) {

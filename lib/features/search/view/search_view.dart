@@ -87,40 +87,15 @@ class _SearchViewState extends State<SearchView> {
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: IconButton(
-              onPressed: () {},
-              tooltip: 'Menü',
-              icon: const Icon(Icons.menu, color: Colors.white),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              'CineTrack',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 40,
-            child: IconButton(
-              onPressed: () {},
-              tooltip: 'Hesap',
-              icon: const Icon(
-                Icons.account_circle_outlined,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+      child: const Text(
+        'CineTrack',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: -0.5,
+        ),
       ),
     );
   }

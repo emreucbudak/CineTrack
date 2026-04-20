@@ -18,6 +18,7 @@ class HomeViewModel extends ChangeNotifier {
   List<TrendingMovie> _discoverMovies = [];
   List<TrendingMovie> _weeklyTrending = [];
   TrendingMovie? _movieOfTheDay;
+  TrendingMovie? _randomMovie;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -25,6 +26,7 @@ class HomeViewModel extends ChangeNotifier {
   List<TrendingMovie> get discoverMovies => _discoverMovies;
   List<TrendingMovie> get weeklyTrending => _weeklyTrending;
   TrendingMovie? get movieOfTheDay => _movieOfTheDay;
+  TrendingMovie? get randomMovie => _randomMovie;
 
   List<TrendingMovie> get _allMovies {
     final seenIds = <int>{};
@@ -51,6 +53,7 @@ class HomeViewModel extends ChangeNotifier {
       _discoverMovies = results[1];
       _weeklyTrending = results[2];
       _selectMovieOfTheDay(notify: false);
+      _selectRandomMovie(notify: false);
 
       if (_allMovies.isEmpty) {
         _errorMessage =
@@ -65,7 +68,7 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   void pickRandomMovie() {
-    _selectMovieOfTheDay();
+    _selectRandomMovie();
   }
 
   void _selectMovieOfTheDay({bool notify = true}) {
@@ -79,20 +82,41 @@ class HomeViewModel extends ChangeNotifier {
       return;
     }
 
-    if (movies.length == 1) {
-      _movieOfTheDay = movies.first;
+    final today = DateTime.now();
+    final daySeed = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).millisecondsSinceEpoch;
+
+    _movieOfTheDay = movies[Random(daySeed).nextInt(movies.length)];
+
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void _selectRandomMovie({bool notify = true}) {
+    final movies = _allMovies;
+
+    if (movies.isEmpty) {
+      _randomMovie = null;
       if (notify) {
         notifyListeners();
       }
       return;
     }
 
-    TrendingMovie nextMovie = movies[_random.nextInt(movies.length)];
-    while (nextMovie.id == _movieOfTheDay?.id) {
-      nextMovie = movies[_random.nextInt(movies.length)];
-    }
+    final excludedIds = {
+      if (_movieOfTheDay != null) _movieOfTheDay!.id,
+      if (_randomMovie != null) _randomMovie!.id,
+    };
+    final candidates = movies
+        .where((movie) => !excludedIds.contains(movie.id))
+        .toList();
+    final pool = candidates.isEmpty ? movies : candidates;
 
-    _movieOfTheDay = nextMovie;
+    _randomMovie = pool[_random.nextInt(pool.length)];
 
     if (notify) {
       notifyListeners();

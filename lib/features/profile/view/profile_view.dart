@@ -8,7 +8,6 @@ import 'package:cinetrack/data/services/movie_service.dart';
 import 'package:cinetrack/features/actor/view/actor_detail_view.dart';
 import 'package:cinetrack/features/auth/view/login_view.dart';
 import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
-import 'package:cinetrack/features/profile/view/premium_frontend_sheet.dart';
 import 'package:cinetrack/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -130,12 +129,7 @@ class _ProfileViewState extends State<ProfileView> {
                   '${_viewModel.followedActorsCount}',
                 ),
                 const SizedBox(height: 12),
-                _buildPremiumSpotlightCard(
-                  onTap: () {
-                    Navigator.pop(context);
-                    _handleSubscriptionAction();
-                  },
-                ),
+                _buildPremiumSpotlightCard(),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -182,36 +176,6 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Future<void> _showPremiumSheet() async {
-    if (!mounted) return;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PremiumFrontendSheet(
-        initialEmail: _viewModel.userEmail,
-        initialName: _viewModel.userName,
-      ),
-    );
-  }
-
-  void _handleSubscriptionAction() {
-    if (_viewModel.hasPremiumSubscription) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Abonelik iptal akışını backend bağlandığında aktif edeceğiz.',
-          ),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
-      return;
-    }
-
-    _showPremiumSheet();
-  }
-
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -240,15 +204,8 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildPremiumSpotlightCard({required VoidCallback onTap}) {
+  Widget _buildPremiumSpotlightCard() {
     final isPremium = _viewModel.hasPremiumSubscription;
-    final actionLabel = isPremium ? 'Aboneliği İptal Et' : 'Premium Al';
-    final actionColor = isPremium
-        ? const Color(0xFF9F2D33)
-        : const Color(0xFFE7B44C);
-    final actionForegroundColor = isPremium
-        ? Colors.white
-        : AppColors.backgroundDark;
     final accentColor = isPremium
         ? const Color(0xFFE7B44C)
         : const Color(0xFF8C6B2D);
@@ -311,7 +268,7 @@ class _ProfileViewState extends State<ProfileView> {
                     Text(
                       isPremium
                           ? 'Premium planınız aktif. Ayrıcalıklarınız kesintisiz devam ediyor.'
-                          : 'Şu anda standart plandasınız. Premium ile deneyimi daha güçlü hale getirebilirsiniz.',
+                          : 'Daha iyi bir deneyim için Premium plana yükseltebilirsiniz.',
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 12,
@@ -421,28 +378,6 @@ class _ProfileViewState extends State<ProfileView> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onTap,
-              icon: Icon(
-                isPremium ? Icons.close_rounded : Icons.arrow_outward_rounded,
-              ),
-              label: Text(
-                actionLabel,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: actionColor,
-                foregroundColor: actionForegroundColor,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -543,47 +478,19 @@ class _ProfileViewState extends State<ProfileView> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _headerButton(
-            Icons.refresh,
-            () => _viewModel.loadProfile(),
-            tooltip: 'Profili yenile',
-          ),
-          const Text(
-            'Profil',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textLight,
-              letterSpacing: -0.3,
+      child: const Center(
+        child: SizedBox(
+          height: 40,
+          child: Center(
+            child: Text(
+              'Profil',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textLight,
+                letterSpacing: -0.3,
+              ),
             ),
-          ),
-          _headerButton(
-            Icons.settings_outlined,
-            () => _showAccountSheet(),
-            tooltip: 'Hesap bilgileri',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerButton(IconData icon, VoidCallback onTap, {String? tooltip}) {
-    return Tooltip(
-      message: tooltip ?? '',
-      child: Material(
-        color: Colors.transparent,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          splashColor: AppColors.primary.withValues(alpha: 0.2),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, color: AppColors.textLight, size: 24),
           ),
         ),
       ),
@@ -595,47 +502,19 @@ class _ProfileViewState extends State<ProfileView> {
       children: [
         const SizedBox(height: 16),
         Center(
-          child: InkWell(
-            onTap: () => _showAccountSheet(),
-            borderRadius: BorderRadius.circular(999),
-            child: Stack(
-              children: [
-                Container(
-                  width: 128,
-                  height: 128,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.2),
-                      width: 4,
-                    ),
-                    color: AppColors.surfaceDark,
-                  ),
-                  child: const ClipOval(
-                    child: Icon(Icons.person, color: Colors.grey, size: 48),
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.backgroundDark,
-                        width: 2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-                ),
-              ],
+          child: Container(
+            width: 128,
+            height: 128,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                width: 4,
+              ),
+              color: AppColors.surfaceDark,
+            ),
+            child: const ClipOval(
+              child: Icon(Icons.person, color: Colors.grey, size: 48),
             ),
           ),
         ),

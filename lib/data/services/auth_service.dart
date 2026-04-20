@@ -279,22 +279,135 @@ class AuthService {
 
   String? _extractError(Map<String, dynamic> body) {
     final payload = _asMap(body['data']);
-
-    return _firstNonBlank([
+    final rawError = _firstNonBlank([
       body['errorMessage'],
       body['message'],
       payload['errorMessage'],
       payload['message'],
     ]);
+
+    return _translateAuthError(rawError);
   }
 
   String _extractDioError(DioException error, String fallback) {
     final responseData = error.response?.data;
     if (responseData is String && responseData.trim().isNotEmpty) {
-      return responseData.trim();
+      return _translateAuthError(responseData) ?? fallback;
     }
 
     return _extractError(_asMap(responseData)) ?? fallback;
+  }
+
+  String? _translateAuthError(String? rawError) {
+    final text = rawError?.trim();
+    if (text == null || text.isEmpty) {
+      return null;
+    }
+
+    final translatedParts = <String>[];
+    for (final part in text.split(RegExp(r';\s*'))) {
+      final translated = _translateSingleAuthError(part);
+      if (translated.isNotEmpty && !translatedParts.contains(translated)) {
+        translatedParts.add(translated);
+      }
+    }
+
+    return translatedParts.isEmpty ? text : translatedParts.join(' ');
+  }
+
+  String _translateSingleAuthError(String rawPart) {
+    final text = rawPart
+        .trim()
+        .replaceFirst(RegExp(r'^[A-Za-z]+:\s*'), '')
+        .trim();
+    final normalized = text.toLowerCase();
+
+    if (normalized.contains('bu email ile kayitli') ||
+        normalized.contains('bu e-posta ile kayıtlı') ||
+        normalized.contains('email with this') ||
+        normalized.contains('emailexists')) {
+      return 'Bu e-posta ile kayıtlı bir hesap var.';
+    }
+
+    if ((normalized.contains('username') &&
+            normalized.contains('already exists')) ||
+        normalized.contains('usernameexists') ||
+        normalized.contains('kullanıcı adı zaten')) {
+      return 'Bu kullanıcı adı zaten kullanılıyor.';
+    }
+
+    if (normalized.contains('invalid email or password')) {
+      return 'E-posta veya şifre hatalı.';
+    }
+
+    if (normalized.contains('invalid verification code')) {
+      return 'Doğrulama kodu hatalı. Lütfen e-postanızdaki 6 haneli kodu kontrol edin.';
+    }
+
+    if (normalized.contains('expired verification') ||
+        normalized.contains('expired temporary') ||
+        normalized.contains('invalid or expired')) {
+      return 'Doğrulama süresi dolmuş olabilir. Lütfen işlemi yeniden başlatın.';
+    }
+
+    if (normalized.contains('verification session') &&
+        normalized.contains('email')) {
+      return 'Doğrulama oturumu bu e-posta adresiyle eşleşmiyor.';
+    }
+
+    if (normalized.contains('must not be empty') ||
+        normalized.contains('notempty')) {
+      if (normalized.contains('email')) {
+        return 'E-posta adresinizi girin.';
+      }
+      if (normalized.contains('username')) {
+        return 'Kullanıcı adınızı girin.';
+      }
+      if (normalized.contains('password')) {
+        return 'Şifrenizi girin.';
+      }
+      if (normalized.contains('code')) {
+        return 'Doğrulama kodunu girin.';
+      }
+
+      return 'Lütfen gerekli alanları doldurun.';
+    }
+
+    if (normalized.contains('not a valid email') ||
+        normalized.contains('emailaddress')) {
+      return 'Geçerli bir e-posta adresi girin.';
+    }
+
+    if (normalized.contains('uppercase') ||
+        normalized.contains('lowercase') ||
+        normalized.contains('special character')) {
+      return 'Şifre en az 8 karakter olmalı; yalnızca harf ve rakam içermeli, en az bir harf ve bir rakam bulunmalıdır.';
+    }
+
+    if (normalized.contains('at least one digit')) {
+      return 'Şifre en az bir rakam içermelidir.';
+    }
+
+    if (normalized.contains('at least one letter')) {
+      return 'Şifre en az bir harf içermelidir.';
+    }
+
+    if (normalized.contains('only letters and numbers') ||
+        normalized.contains('yalnızca harf ve rakam')) {
+      return 'Şifre yalnızca harf ve rakamlardan oluşmalıdır.';
+    }
+
+    if (normalized.contains('at least 8') ||
+        normalized.contains('minimumlength')) {
+      return 'Şifre en az 8 karakter olmalıdır.';
+    }
+
+    if (normalized.contains('last 3 previous passwords') ||
+        normalized.contains('passwordreusenotallowed')) {
+      return 'Yeni şifreniz mevcut şifrenizle veya son 3 eski şifrenizle aynı olamaz.';
+    }
+
+    return text;
   }
 
   Map<String, dynamic>? _decodeJwtPayload(String base64Payload) {

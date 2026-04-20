@@ -27,24 +27,6 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
     setState(() {});
-    if (_viewModel.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.errorMessage!),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
-      _viewModel.clearMessages();
-    }
-    if (_viewModel.successMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.successMessage!),
-          backgroundColor: Colors.green.shade700,
-        ),
-      );
-      _viewModel.clearMessages();
-    }
   }
 
   @override
@@ -143,10 +125,7 @@ class _RegisterViewState extends State<RegisterView> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 40,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 40),
         ],
       ),
       child: Column(
@@ -155,11 +134,111 @@ class _RegisterViewState extends State<RegisterView> {
           _buildHeader(),
           const SizedBox(height: 24),
           _buildTitle(),
-          const SizedBox(height: 32),
+          _buildStatusMessage(),
+          const SizedBox(height: 28),
           _buildForm(),
           const SizedBox(height: 32),
           _buildLoginLink(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusMessage() {
+    final errorMessage = _viewModel.errorMessage;
+    final successMessage = _viewModel.successMessage;
+    final message = errorMessage ?? successMessage;
+
+    if (message == null) {
+      return const SizedBox.shrink();
+    }
+
+    final isError = errorMessage != null;
+    final accent = isError ? const Color(0xFFFF5A5F) : const Color(0xFF32D583);
+    final title = isError ? 'Kayıt tamamlanamadı' : 'Doğrulama hazır';
+    final icon = isError ? Icons.error_rounded : Icons.mark_email_read_rounded;
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: Container(
+        key: ValueKey(message),
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 20),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              accent.withValues(alpha: 0.2),
+              accent.withValues(alpha: 0.06),
+              Colors.white.withValues(alpha: 0.035),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withValues(alpha: 0.36)),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.14),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontSize: 13.5,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: _viewModel.clearMessages,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: Colors.white.withValues(alpha: 0.65),
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -245,6 +324,8 @@ class _RegisterViewState extends State<RegisterView> {
           onToggleVisibility: _viewModel.toggleConfirmPasswordVisibility,
         ),
         const SizedBox(height: 16),
+        _buildPasswordPolicyNote(),
+        const SizedBox(height: 12),
         Text(
           'Kaydı tamamlamak için e-posta doğrulama kodu göndereceğiz.',
           style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
@@ -281,6 +362,39 @@ class _RegisterViewState extends State<RegisterView> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPasswordPolicyNote() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.045),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lock_reset_rounded,
+            color: AppColors.primary.withValues(alpha: 0.9),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Şifreniz en az 8 karakter olmalı; harf ve rakam içermeli.',
+              style: TextStyle(
+                color: Color(0xFFD1D5DB),
+                fontSize: 12.8,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
