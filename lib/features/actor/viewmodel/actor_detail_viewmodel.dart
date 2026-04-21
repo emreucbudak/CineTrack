@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/data/models/actor_models.dart';
 import 'package:cinetrack/data/services/actor_service.dart';
 
 class ActorDetailViewModel extends ChangeNotifier {
   final ActorService _actorService;
+  final LibrarySyncService _librarySyncService;
   final int personId;
 
-  ActorDetailViewModel(this._actorService, this.personId) {
+  ActorDetailViewModel(
+    this._actorService,
+    this._librarySyncService,
+    this.personId,
+  ) {
     loadActor();
   }
 
@@ -40,7 +46,10 @@ class ActorDetailViewModel extends ChangeNotifier {
 
   Future<void> _checkFollowStatus() async {
     try {
-      final result = await _actorService.getFollowedActors(page: 1, pageSize: 100);
+      final result = await _actorService.getFollowedActors(
+        page: 1,
+        pageSize: 100,
+      );
       _isFollowing = result.items.any((f) => f.tmdbId == personId);
     } catch (_) {
       // Ignore
@@ -55,14 +64,20 @@ class ActorDetailViewModel extends ChangeNotifier {
 
     if (_isFollowing) {
       final result = await _actorService.unfollowActor(personId);
-      if (result.success) _isFollowing = false;
+      if (result.success) {
+        _isFollowing = false;
+        _librarySyncService.notifyLibraryChanged();
+      }
     } else {
       final result = await _actorService.followActor(
         tmdbId: personId,
         name: _actor!.name,
         profilePath: _actor!.profilePath,
       );
-      if (result.success) _isFollowing = true;
+      if (result.success) {
+        _isFollowing = true;
+        _librarySyncService.notifyLibraryChanged();
+      }
     }
 
     _followLoading = false;

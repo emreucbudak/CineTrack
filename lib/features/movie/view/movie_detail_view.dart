@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/data/models/movie_models.dart';
 import 'package:cinetrack/data/services/movie_service.dart';
 import 'package:cinetrack/features/movie/viewmodel/movie_detail_viewmodel.dart';
@@ -24,6 +25,7 @@ class _MovieDetailViewState extends State<MovieDetailView> {
     super.initState();
     _viewModel = MovieDetailViewModel(
       context.read<MovieService>(),
+      context.read<LibrarySyncService>(),
       widget.tmdbId,
     );
     _viewModel.addListener(_onChanged);
@@ -64,17 +66,29 @@ class _MovieDetailViewState extends State<MovieDetailView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.textMuted, size: 48),
+              const Icon(
+                Icons.error_outline,
+                color: AppColors.textMuted,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
                 _viewModel.errorMessage!,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _viewModel.loadMovie,
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                child: const Text('Tekrar Dene', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                child: const Text(
+                  'Tekrar Dene',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -134,7 +148,9 @@ class _MovieDetailViewState extends State<MovieDetailView> {
                     ),
                     const SizedBox(width: 8),
                     _circleButton(
-                      icon: _viewModel.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      icon: _viewModel.isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
                       tooltip: 'Favori',
                       filled: true,
                       isPrimary: _viewModel.isFavorite,
@@ -160,7 +176,9 @@ class _MovieDetailViewState extends State<MovieDetailView> {
     return Tooltip(
       message: tooltip ?? '',
       child: Material(
-        color: isPrimary ? AppColors.primary : Colors.black.withValues(alpha: 0.2),
+        color: isPrimary
+            ? AppColors.primary
+            : Colors.black.withValues(alpha: 0.2),
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -522,13 +540,20 @@ class _MovieDetailViewState extends State<MovieDetailView> {
                       child: SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ),
                   errorWidget: (_, _, _) => Container(
                     color: AppColors.surfaceDark,
-                    child: const Icon(Icons.person, color: Colors.grey, size: 28),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.grey,
+                      size: 28,
+                    ),
                   ),
                 ),
               ),
@@ -551,10 +576,7 @@ class _MovieDetailViewState extends State<MovieDetailView> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.accentText,
-              ),
+              style: const TextStyle(fontSize: 10, color: AppColors.accentText),
             ),
           ],
         ),

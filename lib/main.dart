@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cinetrack/core/theme/app_theme.dart';
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/core/services/storage_service.dart';
 import 'package:cinetrack/core/network/dio_client.dart';
 import 'package:cinetrack/data/services/auth_service.dart';
@@ -13,6 +14,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   final storageService = StorageService();
+  final librarySyncService = LibrarySyncService();
   final dioClient = DioClient(storageService);
   final authService = AuthService(dioClient, storageService);
   final movieService = MovieService(dioClient);
@@ -22,6 +24,7 @@ void main() {
     MultiProvider(
       providers: [
         Provider.value(value: storageService),
+        ChangeNotifierProvider.value(value: librarySyncService),
         Provider.value(value: dioClient),
         Provider.value(value: authService),
         Provider.value(value: movieService),
@@ -64,9 +67,7 @@ class _CineTrackAppState extends State<CineTrackApp> {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
