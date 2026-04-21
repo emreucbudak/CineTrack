@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinetrack/core/services/storage_service.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/data/models/actor_models.dart';
 import 'package:cinetrack/data/models/movie_models.dart';
 import 'package:cinetrack/data/services/actor_service.dart';
@@ -8,6 +10,7 @@ import 'package:cinetrack/data/services/movie_service.dart';
 import 'package:cinetrack/features/actor/view/actor_detail_view.dart';
 import 'package:cinetrack/features/auth/view/login_view.dart';
 import 'package:cinetrack/features/movie/view/movie_detail_view.dart';
+import 'package:cinetrack/features/profile/view/premium_frontend_sheet.dart';
 import 'package:cinetrack/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +30,7 @@ class _ProfileViewState extends State<ProfileView> {
     super.initState();
     _viewModel = ProfileViewModel(
       context.read<StorageService>(),
+      context.read<LibrarySyncService>(),
       context.read<AuthService>(),
       context.read<MovieService>(),
       context.read<ActorService>(),
@@ -58,10 +62,7 @@ class _ProfileViewState extends State<ProfileView> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _FavoriteMoviesPage(
-          movies: _viewModel.favoriteMovies,
-          totalCount: _viewModel.favoritesCount,
-        ),
+        builder: (_) => _FavoriteMoviesPage(movies: _viewModel.favoriteMovies),
       ),
     );
   }
@@ -70,10 +71,7 @@ class _ProfileViewState extends State<ProfileView> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _FollowedActorsPage(
-          actors: _viewModel.followedActors,
-          totalCount: _viewModel.followedActorsCount,
-        ),
+        builder: (_) => _FollowedActorsPage(actors: _viewModel.followedActors),
       ),
     );
   }
@@ -83,6 +81,7 @@ class _ProfileViewState extends State<ProfileView> {
 
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -90,117 +89,36 @@ class _ProfileViewState extends State<ProfileView> {
       builder: (context) {
         return SafeArea(
           top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.textMuted,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Hesap Bilgileri',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textLight,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _infoRow('Kullanıcı Adı', _viewModel.userName),
-                _infoRow(
-                  'E-posta',
-                  _viewModel.userEmail.isNotEmpty
-                      ? _viewModel.userEmail
-                      : 'Belirtilmemiş',
-                ),
-                _infoRow('Favori Film', '${_viewModel.favoritesCount}'),
-                _infoRow(
-                  'Takip Edilen Kişi',
-                  '${_viewModel.followedActorsCount}',
-                ),
-                const SizedBox(height: 12),
-                _buildPremiumSpotlightCard(),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _viewModel.loadProfile();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Profili Yenile'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                MediaQuery.of(context).viewInsets.bottom + 28,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _handleLogout();
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Çıkış Yap'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPremiumSpotlightCard(),
+                ],
+              ),
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textLight,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -256,7 +174,7 @@ class _ProfileViewState extends State<ProfileView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Abonelik Yönetimi',
+                      'Abonelik Y\u00f6netimi',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19,
@@ -267,8 +185,8 @@ class _ProfileViewState extends State<ProfileView> {
                     const SizedBox(height: 4),
                     Text(
                       isPremium
-                          ? 'Premium planınız aktif. Ayrıcalıklarınız kesintisiz devam ediyor.'
-                          : 'Daha iyi bir deneyim için Premium plana yükseltebilirsiniz.',
+                          ? 'Premium plan\u0131n\u0131z aktif. Ayr\u0131cal\u0131klar\u0131n\u0131z kesintisiz devam ediyor.'
+                          : 'Daha iyi bir deneyim i\u00e7in Premium plana y\u00fckseltebilirsiniz.',
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 12,
@@ -317,7 +235,7 @@ class _ProfileViewState extends State<ProfileView> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildSubscriptionInfoTile(
-                  label: 'Bitiş Tarihi',
+                  label: 'Biti\u015f Tarihi',
                   value: _viewModel.subscriptionEndsAtLabel,
                   icon: Icons.event_outlined,
                   accentColor: accentColor,
@@ -325,60 +243,42 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Container(
+          const SizedBox(height: 18),
+          SizedBox(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.tune_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
+            child: ElevatedButton(
+              onPressed: _openPremiumFrontendSheet,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isPremium ? accentColor : AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Aboneliği Yönet',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Planınızı görüntüleyin, yükseltin veya iptal akışını buradan yönetin.',
-                        style: TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
+              child: const Text(
+                'Plan\u0131 Y\u00fckseltin',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openPremiumFrontendSheet() async {
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => PremiumFrontendSheet(
+        initialEmail: _viewModel.userEmail,
+        initialName: _viewModel.userName,
       ),
     );
   }
@@ -600,7 +500,7 @@ class _ProfileViewState extends State<ProfileView> {
         const Padding(
           padding: EdgeInsets.only(left: 8, bottom: 12),
           child: Text(
-            'HESAP KÜTÜPHANESİ',
+            'HESAP K\u00dcT\u00dcPHANES\u0130',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -612,21 +512,22 @@ class _ProfileViewState extends State<ProfileView> {
         _buildMenuItem(
           icon: Icons.favorite,
           label: 'Favori Filmler',
-          subtitle: '${_viewModel.favoritesCount} kayıt',
+          subtitle: '${_viewModel.favoritesCount} kay\u0131t',
           onTap: _openFavoriteMovies,
         ),
         const SizedBox(height: 8),
         _buildMenuItem(
           icon: Icons.people_alt_outlined,
-          label: 'Takip Edilen Kişiler',
-          subtitle: '${_viewModel.followedActorsCount} kayıt',
+          label: 'Takip Edilen Ki\u015filer',
+          subtitle: '${_viewModel.followedActorsCount} kay\u0131t',
           onTap: _openFollowedActors,
         ),
         const SizedBox(height: 8),
         _buildMenuItem(
           icon: Icons.badge_outlined,
           label: 'Hesap Bilgileri',
-          subtitle: 'Kullanıcı bilgileri ve hızlı işlemler',
+          subtitle:
+              'Kullan\u0131c\u0131 bilgileri ve h\u0131zl\u0131 i\u015flemler',
           onTap: () => _showAccountSheet(),
         ),
         Padding(
@@ -724,7 +625,7 @@ class _ProfileViewState extends State<ProfileView> {
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  'Çıkış Yap',
+                  '\u00c7\u0131k\u0131\u015f Yap',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -742,9 +643,8 @@ class _ProfileViewState extends State<ProfileView> {
 
 class _FavoriteMoviesPage extends StatelessWidget {
   final List<FavoriteMovie> movies;
-  final int totalCount;
 
-  const _FavoriteMoviesPage({required this.movies, required this.totalCount});
+  const _FavoriteMoviesPage({required this.movies});
 
   @override
   Widget build(BuildContext context) {
@@ -753,12 +653,12 @@ class _FavoriteMoviesPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundDark,
         foregroundColor: Colors.white,
-        title: Text('Favori Filmler ($totalCount)'),
+        title: const Text('Favori Filmler'),
       ),
       body: movies.isEmpty
           ? const _ProfileEmptyState(
               icon: Icons.favorite_border,
-              message: 'Henüz favori filminiz yok.',
+              message: 'Hen\u00fcz favori filminiz yok.',
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -768,9 +668,9 @@ class _FavoriteMoviesPage extends StatelessWidget {
                 final movie = movies[index];
                 return _ProfileListCard(
                   title: movie.title,
-                  subtitle: 'TMDB ID: ${movie.tmdbId}',
                   trailingText: 'Detay',
                   icon: Icons.movie_outlined,
+                  imageUrl: movie.posterUrl,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -788,9 +688,8 @@ class _FavoriteMoviesPage extends StatelessWidget {
 
 class _FollowedActorsPage extends StatelessWidget {
   final List<FollowedActor> actors;
-  final int totalCount;
 
-  const _FollowedActorsPage({required this.actors, required this.totalCount});
+  const _FollowedActorsPage({required this.actors});
 
   @override
   Widget build(BuildContext context) {
@@ -799,12 +698,12 @@ class _FollowedActorsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.backgroundDark,
         foregroundColor: Colors.white,
-        title: Text('Takip Edilen Kişiler ($totalCount)'),
+        title: const Text('Takip Edilen Ki\u015filer'),
       ),
       body: actors.isEmpty
           ? const _ProfileEmptyState(
               icon: Icons.people_outline,
-              message: 'Henüz takip ettiğiniz kişi yok.',
+              message: 'Hen\u00fcz takip etti\u011finiz ki\u015fi yok.',
             )
           : ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -814,9 +713,9 @@ class _FollowedActorsPage extends StatelessWidget {
                 final actor = actors[index];
                 return _ProfileListCard(
                   title: actor.name,
-                  subtitle: 'TMDB ID: ${actor.tmdbId}',
                   trailingText: 'Detay',
                   icon: Icons.person_outline,
+                  imageUrl: actor.profileUrl,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -834,16 +733,16 @@ class _FollowedActorsPage extends StatelessWidget {
 
 class _ProfileListCard extends StatelessWidget {
   final String title;
-  final String subtitle;
   final String trailingText;
   final IconData icon;
+  final String imageUrl;
   final VoidCallback onTap;
 
   const _ProfileListCard({
     required this.title,
-    required this.subtitle,
     required this.trailingText,
     required this.icon,
+    required this.imageUrl,
     required this.onTap,
   });
 
@@ -859,15 +758,7 @@ class _ProfileListCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppColors.primary),
-              ),
+              _ProfileArtwork(imageUrl: imageUrl, icon: icon),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -881,14 +772,6 @@ class _ProfileListCard extends StatelessWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textLight,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -908,6 +791,40 @@ class _ProfileListCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ProfileArtwork extends StatelessWidget {
+  final String imageUrl;
+  final IconData icon;
+
+  const _ProfileArtwork({required this.imageUrl, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage = imageUrl.isNotEmpty;
+
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: hasImage
+          ? CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => _buildFallback(),
+              errorWidget: (context, url, error) => _buildFallback(),
+            )
+          : _buildFallback(),
+    );
+  }
+
+  Widget _buildFallback() {
+    return Center(child: Icon(icon, color: AppColors.primary));
   }
 }
 

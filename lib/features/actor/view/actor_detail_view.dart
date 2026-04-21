@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cinetrack/core/theme/app_colors.dart';
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/data/models/actor_models.dart';
 import 'package:cinetrack/data/services/actor_service.dart';
 import 'package:cinetrack/features/actor/viewmodel/actor_detail_viewmodel.dart';
@@ -24,6 +25,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
     super.initState();
     _viewModel = ActorDetailViewModel(
       context.read<ActorService>(),
+      context.read<LibrarySyncService>(),
       widget.personId,
     );
     _viewModel.addListener(_onChanged);
@@ -64,17 +66,29 @@ class _ActorDetailViewState extends State<ActorDetailView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: AppColors.textMuted, size: 48),
+              const Icon(
+                Icons.error_outline,
+                color: AppColors.textMuted,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
                 _viewModel.errorMessage!,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 16),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _viewModel.loadActor,
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                child: const Text('Tekrar Dene', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
+                child: const Text(
+                  'Tekrar Dene',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -111,11 +125,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.backgroundDark.withValues(alpha: 0.8),
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.borderDark,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.borderDark)),
       ),
       child: SafeArea(
         bottom: false,
@@ -140,11 +150,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
                   ),
                 ),
               ),
-              _headerButton(
-                Icons.share,
-                tooltip: 'Paylaş',
-                onTap: () {},
-              ),
+              _headerButton(Icons.share, tooltip: 'Paylaş', onTap: () {}),
             ],
           ),
         ),
@@ -202,12 +208,18 @@ class _ActorDetailViewState extends State<ActorDetailView> {
                     placeholder: (_, _) => Container(
                       color: AppColors.surfaceDark,
                       child: const Center(
-                        child: CircularProgressIndicator(color: AppColors.primary),
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                     errorWidget: (_, _, _) => Container(
                       color: AppColors.surfaceDark,
-                      child: const Icon(Icons.person, color: Colors.grey, size: 64),
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.grey,
+                        size: 64,
+                      ),
                     ),
                   ),
                 ),
@@ -220,9 +232,16 @@ class _ActorDetailViewState extends State<ActorDetailView> {
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.backgroundDark, width: 2),
+                    border: Border.all(
+                      color: AppColors.backgroundDark,
+                      width: 2,
+                    ),
                   ),
-                  child: const Icon(Icons.verified, color: Colors.white, size: 16),
+                  child: const Icon(
+                    Icons.verified,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
             ],
@@ -278,7 +297,9 @@ class _ActorDetailViewState extends State<ActorDetailView> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: _viewModel.isFollowing
-                      ? BorderSide(color: AppColors.primary.withValues(alpha: 0.3))
+                      ? BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        )
                       : BorderSide.none,
                 ),
                 elevation: _viewModel.isFollowing ? 0 : 8,
@@ -299,10 +320,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.accentText,
-          ),
+          style: const TextStyle(fontSize: 14, color: AppColors.accentText),
         ),
       ],
     );
@@ -369,9 +387,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
       decoration: BoxDecoration(
         color: AppColors.inputBackgroundDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.borderDark,
-        ),
+        border: Border.all(color: AppColors.borderDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,9 +486,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => MovieDetailView(tmdbId: movie.id),
-          ),
+          MaterialPageRoute(builder: (_) => MovieDetailView(tmdbId: movie.id)),
         );
       },
       child: SizedBox(
@@ -537,10 +551,7 @@ class _ActorDetailViewState extends State<ActorDetailView> {
             const SizedBox(height: 2),
             Text(
               '${movie.year} • ${movie.character ?? ''}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.accentText,
-              ),
+              style: const TextStyle(fontSize: 12, color: AppColors.accentText),
             ),
           ],
         ),

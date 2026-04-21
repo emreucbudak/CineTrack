@@ -97,9 +97,7 @@ class ActorService {
     } on DioException catch (e) {
       return (
         success: false,
-        error:
-            (e.response?.data?['errorMessage'] as String?) ??
-            'Bağlantı hatası.',
+        error: _extractErrorMessage(e.response?.data) ?? 'Bağlantı hatası.',
       );
     }
   }
@@ -117,10 +115,29 @@ class ActorService {
     } on DioException catch (e) {
       return (
         success: false,
-        error:
-            (e.response?.data?['errorMessage'] as String?) ??
-            'Bağlantı hatası.',
+        error: _extractErrorMessage(e.response?.data) ?? 'Bağlantı hatası.',
       );
     }
+  }
+
+  String? _extractErrorMessage(dynamic data) {
+    if (data is String) {
+      final text = data.trim();
+      return text.isEmpty ? null : text;
+    }
+
+    if (data is Map<String, dynamic>) {
+      final error =
+          data['errorMessage'] ??
+          data['message'] ??
+          (data['data'] is Map<String, dynamic>
+              ? (data['data'] as Map<String, dynamic>)['errorMessage'] ??
+                    (data['data'] as Map<String, dynamic>)['message']
+              : null);
+
+      return error is String && error.trim().isNotEmpty ? error.trim() : null;
+    }
+
+    return null;
   }
 }

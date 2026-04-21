@@ -1,3 +1,4 @@
+import 'package:cinetrack/core/services/library_sync_service.dart';
 import 'package:cinetrack/core/services/storage_service.dart';
 import 'package:cinetrack/data/models/actor_models.dart';
 import 'package:cinetrack/data/models/movie_models.dart';
@@ -8,16 +9,19 @@ import 'package:flutter/material.dart';
 
 class ProfileViewModel extends ChangeNotifier {
   final StorageService _storage;
+  final LibrarySyncService _librarySyncService;
   final AuthService _authService;
   final MovieService _movieService;
   final ActorService _actorService;
 
   ProfileViewModel(
     this._storage,
+    this._librarySyncService,
     this._authService,
     this._movieService,
     this._actorService,
   ) {
+    _librarySyncService.addListener(_handleLibraryChanged);
     loadProfile();
   }
 
@@ -32,6 +36,7 @@ class ProfileViewModel extends ChangeNotifier {
   // Frontend placeholder values until subscription endpoints are connected.
   bool _hasPremiumSubscription = false;
   DateTime? _subscriptionEndsAt;
+  bool _isRefreshing = false;
 
   bool get isLoading => _isLoading;
   String get userName => _userName;
@@ -57,6 +62,9 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   Future<void> loadProfile() async {
+    if (_isRefreshing) return;
+
+    _isRefreshing = true;
     _isLoading = true;
     notifyListeners();
 
@@ -90,10 +98,21 @@ class ProfileViewModel extends ChangeNotifier {
     }
 
     _isLoading = false;
+    _isRefreshing = false;
     notifyListeners();
   }
 
   Future<void> logout() async {
     await _authService.logout();
+  }
+
+  void _handleLibraryChanged() {
+    loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _librarySyncService.removeListener(_handleLibraryChanged);
+    super.dispose();
   }
 }
